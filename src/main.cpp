@@ -55,7 +55,7 @@ int main(const int argc, char *argv[]) {
            GL_FLOAT,           // type
            GL_FALSE,           // normalized?
            0,                  // stride
-           (void*)0            // array buffer offset
+           nullptr            // array buffer offset
         );
         // Draw the triangle !
         glDrawArrays(GL_TRIANGLES, 0, 3); // Starting from vertex 0; 3 vertices total -> 1 triangle
