@@ -11,8 +11,10 @@
 #define LINUX_CLASS_HINT "RedTTGMatrix"
 #define LINUX_NAME_HINT "matrix"
 
-void setX11Hints(const renderer &rnd);
+void setX11Hints(const renderer *rnd);
 
-void setupWindowForWallpaperMode(renderer &rnd);
+void setupWindowForWallpaperMode(renderer *rnd);
+
+void x11_SwapBuffers(renderer *rnd);
 
 #endif //X11_H

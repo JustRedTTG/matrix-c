@@ -117,9 +117,19 @@ void setupWindowForWallpaperMode(renderer *rnd) {
 			rnd->vi->depth, InputOutput, rnd->vi->visual, mask, &rnd->swa);
 
 	XLowerWindow(rnd->display, rnd->window);
+
+	// Set window type to desktop
+	long value = XInternAtom(rnd->display, "_NET_WM_WINDOW_TYPE_DESKTOP", false);
+	XChangeProperty(rnd->display, rnd->window,
+					XInternAtom(rnd->display, "_NET_WM_WINDOW_TYPE", false),
+					XA_ATOM, 32, PropModeReplace, (unsigned char *) &value, 1);
+	XMapWindow(rnd->display, rnd->window);
 }
 
-void setX11Hints(renderer *rnd) {
+void x11_SwapBuffers(renderer *rnd) {
+	glXSwapBuffers(rnd->display, rnd->window);
+}
+void setX11Hints(const renderer *rnd) {
     Display *display = rnd->display;
     Window xwindow = rnd->window;
 
