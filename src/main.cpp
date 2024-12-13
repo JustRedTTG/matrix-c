@@ -16,12 +16,14 @@ int main(const int argc, char *argv[]) {
 
     rnd->makeWindow();
 
-    // simple red gl screen
-
-
     // Keep the window open for 3 seconds
     auto start = std::chrono::high_resolution_clock::now();
     while (true) {
+        rnd->getEvents();
+        if (rnd->events->quit) {
+            break;
+        }
+
         auto now = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(now - start).count();
         if (duration >= 10) {

@@ -4,8 +4,9 @@
 
 struct options {
     bool wallpaperMode = false;
-    int width = 0;
-    int height = 0;
+    bool fullscreen = true;
+    int width = 800;
+    int height = 600;
 };
 
 options* parseOptions(int argc, char *argv[]);

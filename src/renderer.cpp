@@ -2,7 +2,9 @@
 
 #include <cstring>
 
+#ifdef __linux__
 #include "x11.h"
+#endif
 
 auto glXCreateContextAttribsARB = reinterpret_cast<glXCreateContextAttribsARBProc>(
     glXGetProcAddressARB(
@@ -13,7 +15,6 @@ renderer::renderer(options *opts) {
 }
 
 void renderer::makeWindow() {
-
     if (this->opts->wallpaperMode) {
 #ifdef __linux__
         this->display = XOpenDisplay(nullptr);
@@ -54,7 +55,6 @@ void renderer::makeWindow() {
 #endif
         return;
     }
-
     // Create a normal GLFW context
 
     if (!glfwInit()) {
@@ -62,13 +62,32 @@ void renderer::makeWindow() {
         exit(1);
     }
 
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    if (this->opts->fullscreen) {
+        GLFWmonitor *primaryMonitor = glfwGetPrimaryMonitor();
+        const GLFWvidmode *mode = glfwGetVideoMode(primaryMonitor);
+        this->glfwWindow = glfwCreateWindow(mode->width, mode->height, TITLE, primaryMonitor, nullptr);
+    } else {
+        this->glfwWindow = glfwCreateWindow(this->opts->width, this->opts->height, TITLE, nullptr, nullptr);
+    }
 
+    if (!this->glfwWindow) {
+        const char *description;
+        int code = glfwGetError(&description);
+        std::cerr << "Couldn't create a GLFW window: " << description << " (Error code: " << code << ")" << std::endl;
+        glfwTerminate();
+        exit(1);
+    }
 
-
+    glfwMakeContextCurrent(this->glfwWindow);
 }
 
 void renderer::swapBuffers() {
-#ifdef __linux
+#ifdef __linux__
     if (this->x11) {
         x11_SwapBuffers(this);
         return;
@@ -77,11 +96,33 @@ void renderer::swapBuffers() {
     glfwSwapBuffers(this->glfwWindow);
 }
 
-void renderer::destroy() {
+void renderer::destroy() const {
+#ifdef __linux__
     if (this->x11) {
         XCloseDisplay(this->display);
-    } else {
-        glfwDestroyWindow(this->glfwWindow);
-        glfwTerminate();
+        return;
+    }
+#endif
+
+    glfwDestroyWindow(this->glfwWindow);
+    glfwTerminate();
+}
+
+void renderer::getEvents() {
+    this->events = new groupedEvents();
+#ifdef __linux__
+    if (this->x11) {
+        XEvent event;
+        if (XPending(this->display) > 0) {
+            XNextEvent(this->display, &event);
+            this->events->quit = event.type != DestroyNotify;
+        }
+        return;
+    }
+#endif
+    // GLFW events
+    glfwPollEvents();
+    if (glfwWindowShouldClose(this->glfwWindow)) {
+        this->events->quit = true;
     }
 }

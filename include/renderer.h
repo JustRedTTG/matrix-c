@@ -5,6 +5,7 @@
 #include <X11/extensions/Xrender.h>
 #endif
 #include <options.h>
+#include <events.h>
 #include <GLFW/glfw3.h>
 #include <GL/glx.h>
 
@@ -35,10 +36,13 @@ struct renderer {
 
     void makeWindow();
 
+    void getEvents();
+    groupedEvents *events = nullptr;
+
     explicit renderer(options *opts);
 
     void swapBuffers();
-    void destroy();
+    void destroy() const;
 };
 
 #endif //RENDERER_H

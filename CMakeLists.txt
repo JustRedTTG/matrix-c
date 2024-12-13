@@ -19,6 +19,7 @@ add_executable(matrix
         src/shader.cpp
         src/options.cpp
         src/renderer.cpp
+        src/events.cpp
 )
 
 target_link_libraries(
