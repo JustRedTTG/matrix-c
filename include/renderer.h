@@ -6,8 +6,11 @@
 #endif
 #include <options.h>
 #include <events.h>
+#include <GL/glew.h>
+#include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <GL/glx.h>
+
 
 #define TITLE "Matrix rain"
 

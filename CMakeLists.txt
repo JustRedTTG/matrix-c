@@ -3,13 +3,14 @@ project(matrix)
 
 set(CMAKE_CXX_STANDARD 20)
 
+find_package(GLEW REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
-find_package(GLEW REQUIRED)
 
+include_directories(${GLEW_INCLUDE_DIRS})
 include_directories(${OPENGL_INCLUDE_DIR})
 include_directories(${GLFW_INCLUDE_DIRS})
-include_directories(${GLEW_INCLUDE_DIRS})
+
 
 include_directories("include")
 

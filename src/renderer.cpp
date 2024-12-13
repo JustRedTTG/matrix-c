@@ -84,9 +84,14 @@ void renderer::makeWindow() {
     }
 
     glfwMakeContextCurrent(this->glfwWindow);
+
+    // Initialize GLEW
+    glewExperimental = GL_TRUE;
+    glewInit();
 }
 
 void renderer::swapBuffers() {
+    glFlush();
 #ifdef __linux__
     if (this->x11) {
         x11_SwapBuffers(this);
