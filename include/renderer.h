@@ -4,6 +4,7 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrender.h>
 #endif
+#include <clock.h>
 #include <options.h>
 #include <events.h>
 #include <GL/glew.h>
@@ -34,6 +35,7 @@ struct renderer {
 #else
 
 #endif
+    tickRateClock *clock;
     GLFWwindow *glfwWindow = nullptr;
     GLXContext ctx{};
     GLuint program{};

@@ -37,12 +37,27 @@ int main(const int argc, char *argv[]) {
     // Give our vertices to OpenGL.
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
 
+    GLuint l_Time = glGetUniformLocation(rnd->program, "u_Time");
+
+    float t = 0;
+    float m = 1;
+
 
     while (true) {
         rnd->getEvents();
         if (rnd->events->quit) {
             break;
         }
+
+        t += (rnd->clock->deltaTime / 10) * m;
+
+        if (m > 0 && t > 1) {
+            m = -1;
+        } else if (m < 0 && t < 0) {
+            m = 1;
+        }
+
+        glUniform1f(l_Time, t);
 
         glClearColor(0.1f, 0.1f, 0.1f, 0.2f);
         glClear(GL_COLOR_BUFFER_BIT);

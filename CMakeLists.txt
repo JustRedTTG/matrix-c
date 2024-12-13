@@ -44,6 +44,7 @@ add_executable(matrix
         src/options.cpp
         src/renderer.cpp
         src/events.cpp
+        src/clock.cpp
 )
 
 # Embed files

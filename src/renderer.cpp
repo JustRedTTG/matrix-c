@@ -14,6 +14,7 @@ auto glXCreateContextAttribsARB = reinterpret_cast<glXCreateContextAttribsARBPro
 
 renderer::renderer(options *opts) {
     this->opts = opts;
+    this->clock = new tickRateClock();
 }
 
 void initializeGlew() {
@@ -59,6 +60,7 @@ void renderer::makeWindow() {
 
         this->x11 = true;
         initializeGlew();
+        this->clock->initialize();
 
 #else
         std::cerr << "Wallpaper mode is only supported on Linux" << std::endl;
@@ -97,6 +99,7 @@ void renderer::makeWindow() {
     glfwMakeContextCurrent(this->glfwWindow);
 
     initializeGlew();
+    this->clock->initialize();
 }
 
 void renderer::swapBuffers() {
@@ -132,6 +135,7 @@ void renderer::destroy() const {
 }
 
 void renderer::getEvents() {
+    this->clock->calculateDeltaTime();
     this->events = new groupedEvents();
 #ifdef __linux__
     if (this->x11) {
