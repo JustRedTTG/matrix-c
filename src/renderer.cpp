@@ -1,6 +1,8 @@
 #include "renderer.h"
 
 #include <cstring>
+#include <shader.h>
+#include <vector>
 
 #ifdef __linux__
 #include "x11.h"
@@ -12,6 +14,14 @@ auto glXCreateContextAttribsARB = reinterpret_cast<glXCreateContextAttribsARBPro
 
 renderer::renderer(options *opts) {
     this->opts = opts;
+}
+
+void initializeGlew() {
+    glewExperimental = GL_TRUE;
+    if (glewInit() != GLEW_OK) {
+        std::cerr << "Couldn't initialize GLEW" << std::endl;
+        exit(1);
+    }
 }
 
 void renderer::makeWindow() {
@@ -27,7 +37,7 @@ void renderer::makeWindow() {
             None
         };
 
-        this->ctx = glXCreateContextAttribsARB(this->display, this->fbc, NULL, True, gl3attr);
+        this->ctx = glXCreateContextAttribsARB(this->display, this->fbc, nullptr, True, gl3attr);
 
         if (!this->ctx) {
             printf("Couldn't create an OpenGL context\n");
@@ -48,6 +58,7 @@ void renderer::makeWindow() {
         glViewport(0, 0, this->opts->width, this->opts->height);
 
         this->x11 = true;
+        initializeGlew();
 
 #else
         std::cerr << "Wallpaper mode is only supported on Linux" << std::endl;
@@ -85,9 +96,7 @@ void renderer::makeWindow() {
 
     glfwMakeContextCurrent(this->glfwWindow);
 
-    // Initialize GLEW
-    glewExperimental = GL_TRUE;
-    glewInit();
+    initializeGlew();
 }
 
 void renderer::swapBuffers() {
@@ -109,6 +118,15 @@ void renderer::destroy() const {
     }
 #endif
 
+    if (this->vertexShader) {
+        glDetachShader(this->program, this->vertexShader);
+        glDeleteShader(this->vertexShader);
+    }
+    if (this->fragmentShader) {
+        glDetachShader(this->program, this->fragmentShader);
+        glDeleteShader(this->fragmentShader);
+    }
+    glDeleteProgram(this->program);
     glfwDestroyWindow(this->glfwWindow);
     glfwTerminate();
 }
@@ -130,4 +148,66 @@ void renderer::getEvents() {
     if (glfwWindowShouldClose(this->glfwWindow)) {
         this->events->quit = true;
     }
+}
+
+void renderer::createProgram() {
+    this->program = glCreateProgram();
+}
+
+void renderer::loadShader(const unsigned char *source, int length, const GLuint type) {
+    const std::string src(reinterpret_cast<const char *>(source), length);
+    return loadShader(src.c_str(), type);
+}
+
+void renderer::loadShader(const char *source, const GLuint type) {
+    const GLuint shader = glCreateShader(type);
+    glShaderSource(shader, 1, &source, nullptr);
+    glCompileShader(shader);
+    GLint success;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        GLint logLength;
+        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logLength);
+        std::vector<char> log(logLength);
+        glGetShaderInfoLog(shader, logLength, &logLength, log.data());
+        std::cerr << "Shader compilation failed: " << log.data() << std::endl;
+    }
+    glAttachShader(this->program, shader);
+
+    if (type == GL_VERTEX_SHADER) {
+        this->vertexShader = shader;
+    } else if (type == GL_FRAGMENT_SHADER) {
+        this->fragmentShader = shader;
+    }
+}
+
+void renderer::linkProgram() const {
+    GLint Result = GL_FALSE;
+    int InfoLogLength;
+
+    glLinkProgram(this->program);
+
+    // Check the program
+    glGetProgramiv(this->program, GL_LINK_STATUS, &Result);
+    glGetProgramiv(this->program, GL_INFO_LOG_LENGTH, &InfoLogLength);
+    if ( InfoLogLength > 0 ){
+        std::vector<char> ProgramErrorMessage(InfoLogLength+1);
+        glGetProgramInfoLog(this->program, InfoLogLength, nullptr, &ProgramErrorMessage[0]);
+        printf("%s\n", &ProgramErrorMessage[0]);
+    }
+}
+
+void renderer::loadShader(const unsigned char *source, const int length) {
+    const std::array<std::stringstream, 2> sources = parseShader(source, length);
+    const std::string vertexSource = sources[0].str();
+    const std::string fragmentSource = sources[1].str();
+
+    loadShader(vertexSource.c_str(), GL_VERTEX_SHADER);
+    loadShader(fragmentSource.c_str(), GL_FRAGMENT_SHADER);
+
+    this->linkProgram();
+}
+
+void renderer::useProgram() const {
+    glUseProgram(this->program);
 }

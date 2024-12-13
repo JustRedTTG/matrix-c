@@ -36,10 +36,25 @@ struct renderer {
 #endif
     GLFWwindow *glfwWindow = nullptr;
     GLXContext ctx{};
+    GLuint program{};
+    GLuint vertexShader{};
+    GLuint fragmentShader{};
 
     void makeWindow();
 
     void getEvents();
+
+    void createProgram();
+
+    void loadShader(const unsigned char *source, int length, GLuint type);
+    void loadShader(const char *source, GLuint type);
+
+    void linkProgram() const;
+
+    void loadShader(const unsigned char *source, int length);
+
+    void useProgram() const;
+
     groupedEvents *events = nullptr;
 
     explicit renderer(options *opts);

@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 set( RC_DEPENDS "" )
 
+file(MAKE_DIRECTORY "generated")
 
 function(embed_resource resource_file_name source_file_name variable_name)
 
@@ -17,7 +18,7 @@ function(embed_resource resource_file_name source_file_name variable_name)
 
     string(REGEX REPLACE ", $" "" content "${content}")
 
-    set(array_definition "static const unsigned char ${variable_name}[] =\n{\n${content}\n};")
+    set(array_definition "#pragma once\nstatic constexpr unsigned char ${variable_name}[] =\n{\n${content}\n};")
 
     set(source "// Auto generated file.\n${array_definition}\n")
 
@@ -48,6 +49,7 @@ add_executable(matrix
 # Embed files
 
 embed_resource( "assets/help_message.txt" "generated/help_message.h"  "helpMessage" )
+embed_resource( "assets/shaders/matrix_rain.shader" "generated/shader_matrix_rain.h"  "matrixRainShader" )
 
 
 target_link_libraries(
