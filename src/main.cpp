@@ -28,9 +28,9 @@ int main(const int argc, char *argv[]) {
             break;
         }
 
-        glClearColor(0.4f, 1.0f, 0.2f, 1.0f); // Set the clear color to red
-        glClear(GL_COLOR_BUFFER_BIT); // Clear the screen with the clear color
-        glFlush(); // Flush the buffer
+        glClearColor(0.4f, 1.0f, 0.2f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glFlush();
 
         rnd->swapBuffers();
     }
