@@ -25,9 +25,9 @@ int main(const int argc, char *argv[]) {
     glGenVertexArrays(1, &VertexArrayID);
     glBindVertexArray(VertexArrayID);
     static const GLfloat g_vertex_buffer_data[] = {
-        -1.0f, -1.0f, 0.0f,
-        1.0f, -1.0f, 0.0f,
-        0.0f,  1.0f, 0.0f,
+        -0.5f, -0.5f, 0.0f,
+        0.0f, 0.5f, 0.0f,
+        0.5f,  -0.5f, 0.0f,
      };
     GLuint vertexbuffer;
     // Generate 1 buffer, put the resulting identifier in vertexbuffer
@@ -44,7 +44,7 @@ int main(const int argc, char *argv[]) {
             break;
         }
 
-        glClearColor(0.4f, 1.0f, 0.2f, 1.0f);
+        glClearColor(0.1f, 0.1f, 0.1f, 0.2f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         glEnableVertexAttribArray(0);
