@@ -25,7 +25,7 @@ void initializeGlew() {
     }
 }
 
-void renderer::makeWindow() {
+void renderer::makeContext() {
     if (this->opts->wallpaperMode) {
 #ifdef __linux__
         this->display = XOpenDisplay(nullptr);
@@ -59,8 +59,6 @@ void renderer::makeWindow() {
         glViewport(0, 0, this->opts->width, this->opts->height);
 
         this->x11 = true;
-        initializeGlew();
-        this->clock->initialize();
 
 #else
         std::cerr << "Wallpaper mode is only supported on Linux" << std::endl;
@@ -97,7 +95,10 @@ void renderer::makeWindow() {
     }
 
     glfwMakeContextCurrent(this->glfwWindow);
+}
 
+void renderer::initialize() {
+    makeContext();
     initializeGlew();
     this->clock->initialize();
 }
@@ -246,4 +247,7 @@ void renderer::loopApp() {
 void renderer::destroyApp() {
     this->app->destroy();
     delete this->app;
+}
+
+void renderer::frameBegin() {
 }

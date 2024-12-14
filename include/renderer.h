@@ -69,9 +69,15 @@ struct renderer {
     void loopApp();
     void destroyApp();
 
+    void frameBegin();
+
     groupedEvents *events = nullptr;
 
     explicit renderer(options *opts);
+
+    void makeContext();
+
+    void initialize();
 
     void swapBuffers();
     void destroy() const;

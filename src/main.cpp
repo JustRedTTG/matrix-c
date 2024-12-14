@@ -14,7 +14,7 @@ int main(const int argc, char *argv[]) {
     options *opts = parseOptions(argc, argv);
     auto *rnd = new renderer(opts);
 
-    rnd->makeWindow();
+    rnd->initialize();
     rnd->loadApp();
 
     // glEnable(GL_BLEND);
@@ -25,7 +25,7 @@ int main(const int argc, char *argv[]) {
         if (rnd->events->quit) {
             break;
         }
-
+        rnd->frameBegin();
         rnd->loopApp();
         rnd->swapBuffers();
     }
