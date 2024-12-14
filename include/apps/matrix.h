@@ -1,7 +1,7 @@
 #ifndef MATRIX_H
 #define MATRIX_H
 #include <apps.h>
-#include <shader_triangle.h>
+#include <triangle_shader.h>
 #include <GL/glew.h>
 
 class MatrixApp final : public App {

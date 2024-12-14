@@ -7,9 +7,8 @@ static constexpr GLfloat triangleBufferData[] = {
 };
 
 void TriangleApp::setup() {
-    rnd->createProgram();
+    program = rnd->createProgram();
     rnd->loadShader(triangleShader, sizeof(triangleShader));
-    rnd->useProgram();
 
     GLuint VertexArrayID;
     glGenVertexArrays(1, &VertexArrayID);
@@ -23,6 +22,7 @@ void TriangleApp::setup() {
 }
 
 void TriangleApp::loop() {
+    rnd->useProgram(program);
     t += m * (rnd->clock->deltaTime / 10);
 
     if (m > 0 && t > 10) {
@@ -57,6 +57,7 @@ void TriangleApp::loop() {
     );
     glEnableVertexAttribArray(1);
     glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
 }
 

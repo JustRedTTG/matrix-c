@@ -1,2 +1,4 @@
 Available apps are:
+    matrix (default): A colorful matrix rain.
     triangle: A colorful dithering triangle.
+    debug: A debug app for events and rendering.

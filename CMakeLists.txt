@@ -41,7 +41,9 @@ include_directories("generated")
 # Embed files
 embed_resource( "assets/help_message.txt" "generated/help_message.h"  "helpMessage" )
 embed_resource( "assets/apps_message.txt" "generated/apps_message.h"  "appsMessage" )
-embed_resource( "assets/shaders/triangle.shader" "generated/shader_triangle.h"  "triangleShader" )
+embed_resource( "assets/shaders/triangle.glsl" "generated/triangle_shader.h"  "triangleShader" )
+embed_resource( "assets/shaders/vertex/cursor_motion.glsl" "generated/cursor_motion_vertex_shader.h"  "cursorMotionVertexShader" )
+embed_resource( "assets/shaders/fragment/debug.glsl" "generated/debug_fragment_shader.h"  "debugFragmentShader" )
 
 add_executable(matrix
         src/main.cpp
@@ -50,9 +52,12 @@ add_executable(matrix
         src/renderer.cpp
         src/events.cpp
         src/clock.cpp
+        src/helper.cpp
         src/apps/triangle.cpp
         src/apps.cpp
         src/apps/matrix.cpp
+        src/apps/debug.cpp
+
 )
 
 target_link_libraries(

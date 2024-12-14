@@ -139,6 +139,8 @@ void renderer::makeContext() {
         GLFWmonitor *primaryMonitor = glfwGetPrimaryMonitor();
         const GLFWvidmode *mode = glfwGetVideoMode(primaryMonitor);
         glfwWindow = glfwCreateWindow(mode->width, mode->height, TITLE, primaryMonitor, nullptr);
+        opts->width = mode->width;
+        opts->height = mode->height;
     } else {
         glfwWindow = glfwCreateWindow(opts->width, opts->height, TITLE, nullptr, nullptr);
     }
@@ -213,47 +215,11 @@ void renderer::getEvents() {
     clock->calculateDeltaTime();
 #ifdef __linux__
     if (x11) {
-        XEvent event;
-        if (XPending(display) > 0) {
-            XNextEvent(display, &event);
-            if (x11MouseEvents && event.xcookie.type == GenericEvent && event.xcookie.extension == xinputOptCode) {
-                XGetEventData(this->display, &event.xcookie);
-                if (event.xcookie.evtype == XI_RawMotion) {
-                    auto raw = static_cast<XIRawEvent *>(event.xcookie.data);
-                    std::cout << "Mouse moved: " << raw->raw_values[0] << ", " << raw->raw_values[1] << std::endl;
-                } else if (event.xcookie.evtype == XI_RawKeyPress) {
-                    std::cout << "Key pressed: " << static_cast<XIRawEvent *>(event.xcookie.data)->detail << std::endl;
-                } else if (event.xcookie.evtype == XI_RawKeyRelease) {
-                    std::cout << "Key released: " << static_cast<XIRawEvent *>(event.xcookie.data)->detail << std::endl;
-                } else if (event.xcookie.evtype == XI_RawButtonPress) {
-                    std::cout << "Mouse button pressed: " << static_cast<XIRawEvent *>(event.xcookie.data)->detail << std::endl;
-                } else if (event.xcookie.evtype == XI_RawButtonRelease) {
-                    std::cout << "Mouse button released: " << static_cast<XIRawEvent *>(event.xcookie.data)->detail << std::endl;
-                }
-                XFreeEventData(this->display, &event.xcookie);
-            } else if (!x11MouseEvents) {
-                if (event.type == KeyPress) {
-                    std::cout << "X11 Key pressed: " << event.xkey.keycode << std::endl;
-                } else if (event.type == KeyRelease) {
-                    std::cout << "X11 Key released: " << event.xkey.keycode << std::endl;
-                } else if (event.type == ButtonPress) {
-                    std::cout << "X11 Mouse button pressed: " << event.xbutton.button << std::endl;
-                } else if (event.type == ButtonRelease) {
-                    std::cout << "X11 Mouse button released: " << event.xbutton.button << std::endl;
-                }
-            }
-            if (event.type == DestroyNotify) {
-                events->quit = true;
-            }
-        }
+        handleX11Events(this);
         return;
     }
 #endif
-    // GLFW events
-    glfwPollEvents();
-    if (glfwWindowShouldClose(glfwWindow)) {
-        events->quit = true;
-    }
+    handleGLFWEvents(this);
 }
 
 GLuint renderer::createProgram() {

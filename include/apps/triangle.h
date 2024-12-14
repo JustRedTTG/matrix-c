@@ -1,7 +1,7 @@
 #ifndef TRIANGLE_H
 #define TRIANGLE_H
 #include <apps.h>
-#include <shader_triangle.h>
+#include <triangle_shader.h>
 #include <GL/glew.h>
 
 class TriangleApp final : public App {
@@ -15,6 +15,7 @@ protected:
     int m = 1;
     GLuint vertexBuffer{};
     GLuint ui_Time{};
+    GLuint program{};
 };
 
 #endif //TRIANGLE_H

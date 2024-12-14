@@ -3,6 +3,7 @@
 #include <cstring>
 #include <iostream>
 #include <thread>
+#include <apps/debug.h>
 #include <apps/triangle.h>
 #include <apps/matrix.h>
 #include "apps_message.h"
@@ -18,6 +19,10 @@ App *initializeApp(renderer *rnd, const char *name) {
         return app;
     } else if (strcmp(name, "matrix") == 0) {
         const auto app = new MatrixApp(rnd);
+        app->setup();
+        return app;
+    } else if (strcmp(name, "debug") == 0) {
+        const auto app = new DebugApp(rnd);
         app->setup();
         return app;
     } else {
