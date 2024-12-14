@@ -38,6 +38,10 @@ include_directories("include")
 include_directories("generated")
 
 
+# Embed files
+embed_resource( "assets/help_message.txt" "generated/help_message.h"  "helpMessage" )
+embed_resource( "assets/shaders/matrix_rain.shader" "generated/shader_matrix_rain.h"  "matrixRainShader" )
+
 add_executable(matrix
         src/main.cpp
         src/shader.cpp
@@ -46,12 +50,6 @@ add_executable(matrix
         src/events.cpp
         src/clock.cpp
 )
-
-# Embed files
-
-embed_resource( "assets/help_message.txt" "generated/help_message.h"  "helpMessage" )
-embed_resource( "assets/shaders/matrix_rain.shader" "generated/shader_matrix_rain.h"  "matrixRainShader" )
-
 
 target_link_libraries(
         matrix

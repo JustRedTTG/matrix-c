@@ -21,33 +21,20 @@ int main(const int argc, char *argv[]) {
     rnd->loadShader(matrixRainShader, sizeof(matrixRainShader));
     rnd->useProgram();
 
+
     GLuint VertexArrayID;
     glGenVertexArrays(1, &VertexArrayID);
     glBindVertexArray(VertexArrayID);
     static const GLfloat g_vertex_buffer_data[] = {
-        -0.5f, -0.5f, 0.0f,
-        0.0f, 0.5f, 0.0f,
-        0.5f,  -0.5f, 0.0f,
-     };
-    static const GLfloat g_background_buffer_data[] = {
-        -1.0f, -1.0f, 0.0f,
-        1.0f, -1.0f, 0.0f,
-        1.0f,  1.0f, 0.0f,
-        -1.0f,  -1.0f, 0.0f,
-        1.0f,  1.0f, 0.0f,
-        -1.0f,  1.0f, 0.0f,
-     };
+        -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.5f, 0.0f, 1.0f, 0.0f,
+        0.5f, -0.5f, 0.0f, 0.0f, 1.0f
+    };
     GLuint vertexBuffer;
-    GLuint backgroundBuffer;
 
     glGenBuffers(1, &vertexBuffer);
-    glGenBuffers(1, &backgroundBuffer);
-
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ARRAY_BUFFER, backgroundBuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_background_buffer_data), g_background_buffer_data, GL_STATIC_DRAW);
 
     GLuint l_Time = glGetUniformLocation(rnd->program, "u_Time");
 
@@ -66,7 +53,7 @@ int main(const int argc, char *argv[]) {
 
         t += (rnd->clock->deltaTime / 10) * m;
 
-        if (m > 0 && t > 1) {
+        if (m > 0 && t > 10) {
             m = -1;
             // glClear(GL_COLOR_BUFFER_BIT);
         } else if (m < 0 && t < 0) {
@@ -76,34 +63,30 @@ int main(const int argc, char *argv[]) {
         glUniform1f(l_Time, t);
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        // glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT);
 
-        glEnableVertexAttribArray(0);
+
         glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
         glVertexAttribPointer(
-           0,
-           3,
-           GL_FLOAT,
-           GL_FALSE,
-           0,
-           nullptr
+            0,
+            2,
+            GL_FLOAT,
+            GL_FALSE,
+            5 * sizeof(float),
+            nullptr
         );
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(
+            1,
+            3,
+            GL_FLOAT,
+            GL_FALSE,
+            5 * sizeof(float),
+            reinterpret_cast<void *>(2 * sizeof(float))
+        );
+        glEnableVertexAttribArray(1);
         glDrawArrays(GL_TRIANGLES, 0, 3);
         glDisableVertexAttribArray(1);
-
-        glUniform1f(l_Time, -1.0f);
-        glEnableVertexAttribArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, backgroundBuffer);
-        glVertexAttribPointer(
-           0,
-           3,
-           GL_FLOAT,
-           GL_FALSE,
-           0,
-           nullptr
-        );
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-        glDisableVertexAttribArray(0);
 
         rnd->swapBuffers();
     }

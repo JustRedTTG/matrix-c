@@ -35,6 +35,7 @@ struct renderer {
 #else
 
 #endif
+    int antialiasSamples = 4;
     tickRateClock *clock;
     GLFWwindow *glfwWindow = nullptr;
     GLXContext ctx{};

@@ -55,8 +55,8 @@ void setupWindowForWallpaperMode(renderer *rnd) {
 		GLX_DEPTH_SIZE      , 24,
 		GLX_STENCIL_SIZE    , 8,
 		GLX_DOUBLEBUFFER    , True,
-		//GLX_SAMPLE_BUFFERS  , 1,
-		//GLX_SAMPLES         , 4,
+		GLX_SAMPLE_BUFFERS  , rnd->antialiasSamples > 0 ? 1 : 0,
+		GLX_SAMPLES         , rnd->antialiasSamples,
 		None
 	};
 
