@@ -154,16 +154,25 @@ void renderer::getEvents() {
     }
 }
 
-void renderer::createProgram() {
+GLuint renderer::createProgram() {
     this->program = glCreateProgram();
+    return this->program;
 }
 
-void renderer::loadShader(const unsigned char *source, int length, const GLuint type) {
+void renderer::loadShaderInternal(const unsigned char *source, int length, const GLuint type) {
+    this->loadShader(source, length, type, this->program);
+}
+
+void renderer::loadShader(const unsigned char *source, int length, GLuint type, GLuint program) {
     const std::string src(reinterpret_cast<const char *>(source), length);
-    return loadShader(src.c_str(), type);
+    return loadShader(src.c_str(), type, program);
 }
 
 void renderer::loadShader(const char *source, const GLuint type) {
+    this->loadShader(source, type, this->program);
+}
+
+void renderer::loadShader(const char *source, GLuint type, GLuint program) {
     const GLuint shader = glCreateShader(type);
     glShaderSource(shader, 1, &source, nullptr);
     glCompileShader(shader);
@@ -176,32 +185,39 @@ void renderer::loadShader(const char *source, const GLuint type) {
         glGetShaderInfoLog(shader, logLength, &logLength, log.data());
         std::cerr << "Shader compilation failed: " << log.data() << std::endl;
     }
-    glAttachShader(this->program, shader);
+    glAttachShader(program, shader);
 
-    if (type == GL_VERTEX_SHADER) {
+    if (type == GL_VERTEX_SHADER)
         this->vertexShader = shader;
-    } else if (type == GL_FRAGMENT_SHADER) {
+    else if (type == GL_FRAGMENT_SHADER)
         this->fragmentShader = shader;
-    }
 }
 
 void renderer::linkProgram() const {
+    this->linkProgram(this->program);
+}
+
+void renderer::linkProgram(const GLuint program) const {
     GLint Result = GL_FALSE;
     int InfoLogLength;
 
-    glLinkProgram(this->program);
+    glLinkProgram(program);
 
     // Check the program
-    glGetProgramiv(this->program, GL_LINK_STATUS, &Result);
-    glGetProgramiv(this->program, GL_INFO_LOG_LENGTH, &InfoLogLength);
+    glGetProgramiv(program, GL_LINK_STATUS, &Result);
+    glGetProgramiv(program, GL_INFO_LOG_LENGTH, &InfoLogLength);
     if ( InfoLogLength > 0 ){
         std::vector<char> ProgramErrorMessage(InfoLogLength+1);
-        glGetProgramInfoLog(this->program, InfoLogLength, nullptr, &ProgramErrorMessage[0]);
+        glGetProgramInfoLog(program, InfoLogLength, nullptr, &ProgramErrorMessage[0]);
         printf("%s\n", &ProgramErrorMessage[0]);
     }
 }
 
 void renderer::loadShader(const unsigned char *source, const int length) {
+    this->loadShader(source, length, this->program);
+}
+
+void renderer::loadShader(const unsigned char *source, int length, GLuint program) {
     const std::array<std::stringstream, 2> sources = parseShader(source, length);
     const std::string vertexSource = sources[0].str();
     const std::string fragmentSource = sources[1].str();
@@ -209,9 +225,25 @@ void renderer::loadShader(const unsigned char *source, const int length) {
     loadShader(vertexSource.c_str(), GL_VERTEX_SHADER);
     loadShader(fragmentSource.c_str(), GL_FRAGMENT_SHADER);
 
-    this->linkProgram();
+    this->linkProgram(program);
 }
 
-void renderer::useProgram() const {
-    glUseProgram(this->program);
+void renderer::useProgram(const GLuint program) {
+    glUseProgram(program);
+}
+void renderer::useProgram() {
+    this->useProgram(this->program);
+}
+
+void renderer::loadApp() {
+    this->app = initializeApp(this, this->opts->app);
+}
+
+void renderer::loopApp() {
+    this->app->loop();
+}
+
+void renderer::destroyApp() {
+    this->app->destroy();
+    delete this->app;
 }

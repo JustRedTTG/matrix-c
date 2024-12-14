@@ -4,6 +4,7 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrender.h>
 #endif
+#include <apps.h>
 #include <clock.h>
 #include <options.h>
 #include <events.h>
@@ -16,7 +17,6 @@
 #define TITLE "Matrix rain"
 
 typedef GLXContext (*glXCreateContextAttribsARBProc)(Display *, GLXFBConfig, GLXContext, Bool, const int *);
-
 
 struct renderer {
     options *opts;
@@ -36,6 +36,7 @@ struct renderer {
 
 #endif
     int antialiasSamples = 4;
+    App *app;
     tickRateClock *clock;
     GLFWwindow *glfwWindow = nullptr;
     GLXContext ctx{};
@@ -47,16 +48,26 @@ struct renderer {
 
     void getEvents();
 
-    void createProgram();
+    GLuint createProgram();
 
-    void loadShader(const unsigned char *source, int length, GLuint type);
+    void loadShaderInternal(const unsigned char *source, int length, GLuint type);
+    void loadShader(const unsigned char *source, int length, GLuint type, GLuint program);
+
     void loadShader(const char *source, GLuint type);
+    void loadShader(const char *source, GLuint type, GLuint program);
 
     void linkProgram() const;
+    void linkProgram(GLuint program) const;
 
     void loadShader(const unsigned char *source, int length);
+    void loadShader(const unsigned char *source, int length, GLuint program);
 
-    void useProgram() const;
+    void useProgram(GLuint program);
+    void useProgram();
+
+    void loadApp();
+    void loopApp();
+    void destroyApp();
 
     groupedEvents *events = nullptr;
 

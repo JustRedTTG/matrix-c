@@ -40,7 +40,7 @@ include_directories("generated")
 
 # Embed files
 embed_resource( "assets/help_message.txt" "generated/help_message.h"  "helpMessage" )
-embed_resource( "assets/shaders/matrix_rain.shader" "generated/shader_matrix_rain.h"  "matrixRainShader" )
+embed_resource( "assets/shaders/triangle.shader" "generated/shader_triangle.h"  "triangleShader" )
 
 add_executable(matrix
         src/main.cpp
@@ -49,6 +49,8 @@ add_executable(matrix
         src/renderer.cpp
         src/events.cpp
         src/clock.cpp
+        src/apps/triangle.cpp
+        src/apps.cpp
 )
 
 target_link_libraries(
