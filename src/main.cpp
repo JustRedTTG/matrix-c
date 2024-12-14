@@ -15,7 +15,6 @@ int main(const int argc, char *argv[]) {
     auto *rnd = new renderer(opts);
 
     rnd->initialize();
-    rnd->loadApp();
 
     // glEnable(GL_BLEND);
     // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -25,8 +24,11 @@ int main(const int argc, char *argv[]) {
         if (rnd->events->quit) {
             break;
         }
+
         rnd->frameBegin();
         rnd->loopApp();
+        rnd->frameEnd();
+
         rnd->swapBuffers();
     }
 

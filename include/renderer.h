@@ -32,6 +32,10 @@ struct renderer {
     GLXFBConfig fbc{};
     XSetWindowAttributes swa{};
     bool x11 = false;
+    bool x11MouseEvents = false;
+    int xinputOptCode;
+    static void handleSignal(int signal);
+    void setupSignalHandling();
 #else
 
 #endif
@@ -43,6 +47,9 @@ struct renderer {
     GLuint program{};
     GLuint vertexShader{};
     GLuint fragmentShader{};
+    GLuint fboC{};
+    GLuint fboM{};
+    GLuint fboP{};
 
     void makeWindow();
 
@@ -66,16 +73,22 @@ struct renderer {
     void useProgram();
 
     void loadApp();
-    void loopApp();
-    void destroyApp();
+    void loopApp() const;
+    void destroyApp() const;
 
-    void frameBegin();
+    void frameBegin() const;
+
+    void frameEnd() const;
 
     groupedEvents *events = nullptr;
+
+    static renderer *instance;
 
     explicit renderer(options *opts);
 
     void makeContext();
+
+    void makeFrameBuffers();
 
     void initialize();
 

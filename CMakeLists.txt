@@ -53,7 +53,6 @@ add_executable(matrix
         src/apps/triangle.cpp
         src/apps.cpp
         src/apps/matrix.cpp
-        include/apps/matrix.h
 )
 
 target_link_libraries(
@@ -65,5 +64,5 @@ if (UNIX)  # This includes Linux and other Unix-like systems
     find_package(X11 REQUIRED)
     include_directories(${X11_INCLUDE_DIR})
     target_sources(matrix PRIVATE src/x11.cpp)
-    target_link_libraries(matrix ${X11_LIBRARIES} X11 Xrender)
+    target_link_libraries(matrix ${X11_LIBRARIES} X11 Xrender Xi)
 endif ()

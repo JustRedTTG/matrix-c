@@ -4,6 +4,7 @@
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
 #include <X11/extensions/Xrender.h>
+#include <X11/extensions/XInput2.h>
 #include <renderer.h>
 #include <iostream>
 

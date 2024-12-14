@@ -4,17 +4,24 @@
 #include <shader.h>
 #include <vector>
 
+
 #ifdef __linux__
 #include "x11.h"
+#include <csignal>
+#include <signal.h>
 #endif
 
 auto glXCreateContextAttribsARB = reinterpret_cast<glXCreateContextAttribsARBProc>(
     glXGetProcAddressARB(
         reinterpret_cast<const GLubyte *>("glXCreateContextAttribsARB")));
 
+renderer *renderer::instance = nullptr;
+
 renderer::renderer(options *opts) {
     this->opts = opts;
-    this->clock = new tickRateClock();
+    clock = new tickRateClock();
+    events = new groupedEvents();
+    instance = this;
 }
 
 void initializeGlew() {
@@ -24,11 +31,34 @@ void initializeGlew() {
         exit(1);
     }
 }
+#ifdef __linux__
+void renderer::handleSignal(const int signal) {
+    if (signal == SIGINT || signal == SIGTERM || signal == SIGSTOP) {
+        instance->events->quit = true;
+    }
+}
+
+void renderer::setupSignalHandling() {
+    const auto handler = handleSignal;
+    std::signal(SIGINT, handler);
+    std::signal(SIGTERM, handler);
+    std::signal(SIGSTOP, handler);
+}
+#endif
+
+
+void createFrameBuffer(GLuint &fbo) {
+    glCreateFramebuffers(1, &fbo);
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        std::cerr << "Framebuffer is not complete" << std::endl;
+        exit(1);
+    }
+}
 
 void renderer::makeContext() {
-    if (this->opts->wallpaperMode) {
+    if (opts->wallpaperMode) {
 #ifdef __linux__
-        this->display = XOpenDisplay(nullptr);
+        display = XOpenDisplay(nullptr);
         setupWindowForWallpaperMode(this);
         int gl3attr[] = {
             GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
@@ -38,9 +68,9 @@ void renderer::makeContext() {
             None
         };
 
-        this->ctx = glXCreateContextAttribsARB(this->display, this->fbc, nullptr, True, gl3attr);
+        ctx = glXCreateContextAttribsARB(display, fbc, nullptr, True, gl3attr);
 
-        if (!this->ctx) {
+        if (!ctx) {
             printf("Couldn't create an OpenGL context\n");
             exit(1);
         }
@@ -51,14 +81,41 @@ void renderer::makeContext() {
         windowName.format = 8;
         windowName.nitems = strlen(reinterpret_cast<char *>(windowName.value));
 
-        XSetWMName(this->display, this->window, &windowName);
+        XSetWMName(display, window, &windowName);
 
-        XMapWindow(this->display, this->window);
-        glXMakeCurrent(this->display, this->window, this->ctx);
+        XMapWindow(display, window);
 
-        glViewport(0, 0, this->opts->width, this->opts->height);
+        int event, error;
+        if (!XQueryExtension(display, "XInputExtension", &xinputOptCode, &event, &error)) {
+            std::cerr << "X Input extension not available" << std::endl;
+            XSelectInput(
+                display, window,
+                ExposureMask |
+                KeyPressMask | KeyReleaseMask |
+                StructureNotifyMask |
+                ButtonPressMask | ButtonReleaseMask | PointerMotionMask
+            );
+        } else {
+            x11MouseEvents = true;
+            XIEventMask evmask;
+            unsigned char mask[(XI_LASTEVENT + 7)/8] = { 0 };
+            evmask.deviceid = XIAllDevices;
+            evmask.mask_len = sizeof(mask);
+            evmask.mask = mask;
+            XISetMask(mask, XI_RawMotion);
+            XISetMask(mask, XI_RawKeyPress);
+            XISetMask(mask, XI_RawKeyRelease);
+            XISetMask(mask, XI_RawButtonPress);
+            XISetMask(mask, XI_RawButtonRelease);
 
-        this->x11 = true;
+            XISelectEvents(this->display, DefaultRootWindow(this->display), &evmask, 1);
+        }
+
+        glXMakeCurrent(display, window, ctx);
+
+        glViewport(0, 0, opts->width, opts->height);
+
+        x11 = true;
 
 #else
         std::cerr << "Wallpaper mode is only supported on Linux" << std::endl;
@@ -78,15 +135,15 @@ void renderer::makeContext() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    if (this->opts->fullscreen) {
+    if (opts->fullscreen) {
         GLFWmonitor *primaryMonitor = glfwGetPrimaryMonitor();
         const GLFWvidmode *mode = glfwGetVideoMode(primaryMonitor);
-        this->glfwWindow = glfwCreateWindow(mode->width, mode->height, TITLE, primaryMonitor, nullptr);
+        glfwWindow = glfwCreateWindow(mode->width, mode->height, TITLE, primaryMonitor, nullptr);
     } else {
-        this->glfwWindow = glfwCreateWindow(this->opts->width, this->opts->height, TITLE, nullptr, nullptr);
+        glfwWindow = glfwCreateWindow(opts->width, opts->height, TITLE, nullptr, nullptr);
     }
 
-    if (!this->glfwWindow) {
+    if (!glfwWindow) {
         const char *description;
         int code = glfwGetError(&description);
         std::cerr << "Couldn't create a GLFW window: " << description << " (Error code: " << code << ")" << std::endl;
@@ -94,74 +151,118 @@ void renderer::makeContext() {
         exit(1);
     }
 
-    glfwMakeContextCurrent(this->glfwWindow);
+    glfwMakeContextCurrent(glfwWindow);
+}
+
+void renderer::makeFrameBuffers() {
+    createFrameBuffer(fboC);
+    createFrameBuffer(fboM);
+    createFrameBuffer(fboP);
 }
 
 void renderer::initialize() {
+#ifdef __linux__
+    setupSignalHandling();
+#endif
     makeContext();
     initializeGlew();
-    this->clock->initialize();
+    makeFrameBuffers();
+    clock->initialize();
+    loadApp();
 }
 
 void renderer::swapBuffers() {
     glFlush();
 #ifdef __linux__
-    if (this->x11) {
+    if (x11) {
         x11_SwapBuffers(this);
         return;
     }
 #endif
-    glfwSwapBuffers(this->glfwWindow);
+    glfwSwapBuffers(glfwWindow);
 }
 
 void renderer::destroy() const {
 #ifdef __linux__
-    if (this->x11) {
-        XCloseDisplay(this->display);
-        return;
+    if (x11) {
+        XCloseDisplay(display);
     }
+#else
+    if () {}
 #endif
+    else {
+        glfwDestroyWindow(glfwWindow);
+        glfwTerminate();
+    }
 
-    if (this->vertexShader) {
-        glDetachShader(this->program, this->vertexShader);
-        glDeleteShader(this->vertexShader);
+    if (vertexShader) {
+        glDetachShader(program, vertexShader);
+        glDeleteShader(vertexShader);
     }
-    if (this->fragmentShader) {
-        glDetachShader(this->program, this->fragmentShader);
-        glDeleteShader(this->fragmentShader);
+    if (fragmentShader) {
+        glDetachShader(program, fragmentShader);
+        glDeleteShader(fragmentShader);
     }
-    glDeleteProgram(this->program);
-    glfwDestroyWindow(this->glfwWindow);
-    glfwTerminate();
+    glDeleteProgram(program);
+    glDeleteFramebuffers(1, &fboC);
+    glDeleteFramebuffers(1, &fboM);
+    glDeleteFramebuffers(1, &fboP);
 }
 
 void renderer::getEvents() {
-    this->clock->calculateDeltaTime();
-    this->events = new groupedEvents();
+    clock->calculateDeltaTime();
 #ifdef __linux__
-    if (this->x11) {
+    if (x11) {
         XEvent event;
-        if (XPending(this->display) > 0) {
-            XNextEvent(this->display, &event);
-            this->events->quit = event.type != DestroyNotify;
+        if (XPending(display) > 0) {
+            XNextEvent(display, &event);
+            if (x11MouseEvents && event.xcookie.type == GenericEvent && event.xcookie.extension == xinputOptCode) {
+                XGetEventData(this->display, &event.xcookie);
+                if (event.xcookie.evtype == XI_RawMotion) {
+                    auto raw = static_cast<XIRawEvent *>(event.xcookie.data);
+                    std::cout << "Mouse moved: " << raw->raw_values[0] << ", " << raw->raw_values[1] << std::endl;
+                } else if (event.xcookie.evtype == XI_RawKeyPress) {
+                    std::cout << "Key pressed: " << static_cast<XIRawEvent *>(event.xcookie.data)->detail << std::endl;
+                } else if (event.xcookie.evtype == XI_RawKeyRelease) {
+                    std::cout << "Key released: " << static_cast<XIRawEvent *>(event.xcookie.data)->detail << std::endl;
+                } else if (event.xcookie.evtype == XI_RawButtonPress) {
+                    std::cout << "Mouse button pressed: " << static_cast<XIRawEvent *>(event.xcookie.data)->detail << std::endl;
+                } else if (event.xcookie.evtype == XI_RawButtonRelease) {
+                    std::cout << "Mouse button released: " << static_cast<XIRawEvent *>(event.xcookie.data)->detail << std::endl;
+                }
+                XFreeEventData(this->display, &event.xcookie);
+            } else if (!x11MouseEvents) {
+                if (event.type == KeyPress) {
+                    std::cout << "X11 Key pressed: " << event.xkey.keycode << std::endl;
+                } else if (event.type == KeyRelease) {
+                    std::cout << "X11 Key released: " << event.xkey.keycode << std::endl;
+                } else if (event.type == ButtonPress) {
+                    std::cout << "X11 Mouse button pressed: " << event.xbutton.button << std::endl;
+                } else if (event.type == ButtonRelease) {
+                    std::cout << "X11 Mouse button released: " << event.xbutton.button << std::endl;
+                }
+            }
+            if (event.type == DestroyNotify) {
+                events->quit = true;
+            }
         }
         return;
     }
 #endif
     // GLFW events
     glfwPollEvents();
-    if (glfwWindowShouldClose(this->glfwWindow)) {
-        this->events->quit = true;
+    if (glfwWindowShouldClose(glfwWindow)) {
+        events->quit = true;
     }
 }
 
 GLuint renderer::createProgram() {
-    this->program = glCreateProgram();
-    return this->program;
+    program = glCreateProgram();
+    return program;
 }
 
 void renderer::loadShaderInternal(const unsigned char *source, int length, const GLuint type) {
-    this->loadShader(source, length, type, this->program);
+    loadShader(source, length, type, program);
 }
 
 void renderer::loadShader(const unsigned char *source, int length, GLuint type, GLuint program) {
@@ -170,7 +271,7 @@ void renderer::loadShader(const unsigned char *source, int length, GLuint type, 
 }
 
 void renderer::loadShader(const char *source, const GLuint type) {
-    this->loadShader(source, type, this->program);
+    loadShader(source, type, program);
 }
 
 void renderer::loadShader(const char *source, GLuint type, GLuint program) {
@@ -189,13 +290,13 @@ void renderer::loadShader(const char *source, GLuint type, GLuint program) {
     glAttachShader(program, shader);
 
     if (type == GL_VERTEX_SHADER)
-        this->vertexShader = shader;
+        vertexShader = shader;
     else if (type == GL_FRAGMENT_SHADER)
-        this->fragmentShader = shader;
+        fragmentShader = shader;
 }
 
 void renderer::linkProgram() const {
-    this->linkProgram(this->program);
+    linkProgram(program);
 }
 
 void renderer::linkProgram(const GLuint program) const {
@@ -207,15 +308,15 @@ void renderer::linkProgram(const GLuint program) const {
     // Check the program
     glGetProgramiv(program, GL_LINK_STATUS, &Result);
     glGetProgramiv(program, GL_INFO_LOG_LENGTH, &InfoLogLength);
-    if ( InfoLogLength > 0 ){
-        std::vector<char> ProgramErrorMessage(InfoLogLength+1);
+    if (InfoLogLength > 0) {
+        std::vector<char> ProgramErrorMessage(InfoLogLength + 1);
         glGetProgramInfoLog(program, InfoLogLength, nullptr, &ProgramErrorMessage[0]);
         printf("%s\n", &ProgramErrorMessage[0]);
     }
 }
 
 void renderer::loadShader(const unsigned char *source, const int length) {
-    this->loadShader(source, length, this->program);
+    loadShader(source, length, program);
 }
 
 void renderer::loadShader(const unsigned char *source, int length, GLuint program) {
@@ -226,28 +327,34 @@ void renderer::loadShader(const unsigned char *source, int length, GLuint progra
     loadShader(vertexSource.c_str(), GL_VERTEX_SHADER);
     loadShader(fragmentSource.c_str(), GL_FRAGMENT_SHADER);
 
-    this->linkProgram(program);
+    linkProgram(program);
 }
 
 void renderer::useProgram(const GLuint program) {
     glUseProgram(program);
 }
+
 void renderer::useProgram() {
-    this->useProgram(this->program);
+    useProgram(program);
 }
 
 void renderer::loadApp() {
-    this->app = initializeApp(this, this->opts->app);
+    app = initializeApp(this, opts->app);
 }
 
-void renderer::loopApp() {
-    this->app->loop();
+void renderer::loopApp() const {
+    app->loop();
 }
 
-void renderer::destroyApp() {
-    this->app->destroy();
-    delete this->app;
+void renderer::destroyApp() const {
+    app->destroy();
+    delete app;
 }
 
-void renderer::frameBegin() {
+void renderer::frameBegin() const {
+    // glBindFramebuffer(GL_FRAMEBUFFER, fboC);
+}
+
+void renderer::frameEnd() const {
+    // glBindFramebuffer(GL_FRAMEBUFFER, fboM);
 }
