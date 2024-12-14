@@ -5,9 +5,9 @@
 struct options {
     bool wallpaperMode = false;
     bool fullscreen = true;
-    int width = 800;
-    int height = 600;
-    const char* app = "triangle";
+    long width = 800;
+    long height = 600;
+    char* app = new char[256];
 };
 
 options* parseOptions(int argc, char *argv[]);

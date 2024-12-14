@@ -5,3 +5,4 @@ usage:
     -m: run in minimized mode
     --width: set the width of the window
     --height: set the height of the window
+    --app: set the app to run
