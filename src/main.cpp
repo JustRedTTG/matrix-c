@@ -5,7 +5,6 @@
 #include <iostream>
 #include <options.h>
 #include <thread>
-#include "shader_matrix_rain.h"
 
 #ifdef __linux__
 #include "x11.h"

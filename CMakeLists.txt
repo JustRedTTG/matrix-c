@@ -40,6 +40,7 @@ include_directories("generated")
 
 # Embed files
 embed_resource( "assets/help_message.txt" "generated/help_message.h"  "helpMessage" )
+embed_resource( "assets/apps_message.txt" "generated/apps_message.h"  "appsMessage" )
 embed_resource( "assets/shaders/triangle.shader" "generated/shader_triangle.h"  "triangleShader" )
 
 add_executable(matrix

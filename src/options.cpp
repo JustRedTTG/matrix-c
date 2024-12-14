@@ -1,13 +1,16 @@
 #include "options.h"
 
+#include <chrono>
 #include <iostream>
 #include <string>
 #include <cstdio>
 #include <cstring>
+#include <thread>
 #define DEFAULT_APP "triangle"
 
 void showHelp() {
-    std::cout << helpMessage << std::endl;
+    std::string helpText(reinterpret_cast<const char*>(helpMessage), sizeof(helpMessage));
+    std::cout << helpText << std::endl;
 }
 
 options* parseOptions(int argc, char *argv[]) {
@@ -33,6 +36,7 @@ options* parseOptions(int argc, char *argv[]) {
             hasSetApp = true;
         } else {
             std::cerr << "Unknown argument: " << arg << std::endl;
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
             showHelp();
             exit(1);
         }

@@ -1,0 +1,2 @@
+Available apps are:
+    triangle: A colorful dithering triangle.
