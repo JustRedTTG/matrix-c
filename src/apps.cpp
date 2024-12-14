@@ -4,6 +4,7 @@
 #include <iostream>
 #include <thread>
 #include <apps/triangle.h>
+#include <apps/matrix.h>
 #include "apps_message.h"
 
 App::App(renderer *rnd) {
@@ -13,6 +14,10 @@ App::App(renderer *rnd) {
 App *initializeApp(renderer *rnd, const char *name) {
     if (strcmp(name, "triangle") == 0) {
         const auto app = new TriangleApp(rnd);
+        app->setup();
+        return app;
+    } else if (strcmp(name, "matrix") == 0) {
+        const auto app = new MatrixApp(rnd);
         app->setup();
         return app;
     } else {

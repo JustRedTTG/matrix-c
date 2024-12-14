@@ -52,6 +52,8 @@ add_executable(matrix
         src/clock.cpp
         src/apps/triangle.cpp
         src/apps.cpp
+        src/apps/matrix.cpp
+        include/apps/matrix.h
 )
 
 target_link_libraries(
