@@ -18,6 +18,17 @@
 
 typedef GLXContext (*glXCreateContextAttribsARBProc)(Display *, GLXFBConfig, GLXContext, Bool, const int *);
 
+static constexpr GLfloat ppFullQuadBufferData[] = {
+    // Coordinates    // Texture coordinates
+     1.0f, -1.0f,     1.0f, 0.0f,
+    -1.0f, -1.0f,     0.0f, 0.0f,
+    -1.0f,  1.0f,     0.0f, 1.0f,
+
+     1.0f,  1.0f,     1.0f, 1.0f,
+     1.0f, -1.0f,     1.0f, 0.0f,
+    -1.0f,  1.0f,     0.0f, 1.0f
+};
+
 struct renderer {
     options *opts;
 #ifdef __linux__
@@ -47,13 +58,22 @@ struct renderer {
     GLuint program{};
     GLuint vertexShader{};
     GLuint fragmentShader{};
+
+    GLuint ppGhostingProgram{};
+    GLuint ppFinalProgram{};
+    GLuint ppFullQuadBuffer{};
+
     GLuint fboC{};
+    GLuint fboCTexture{};
     GLuint fboM{};
+    GLuint fboMTexture{};
     GLuint fboP{};
+    GLuint fboPTexture{};
+    GLuint RBO{};
 
     void makeWindow();
 
-    void getEvents();
+    void getEvents() const;
 
     GLuint createProgram();
 
@@ -64,13 +84,13 @@ struct renderer {
     void loadShader(const char *source, GLuint type, GLuint program);
 
     void linkProgram() const;
-    void linkProgram(GLuint program) const;
+    static void linkProgram(GLuint program);
 
     void loadShader(const unsigned char *source, int length);
     void loadShader(const unsigned char *source, int length, GLuint program);
 
-    void useProgram(GLuint program);
-    void useProgram();
+    static void useProgram(GLuint program);
+    void useProgram() const;
 
     void loadApp();
     void loopApp() const;
@@ -89,6 +109,9 @@ struct renderer {
     void makeContext();
 
     void makeFrameBuffers();
+    void createFrameBufferTexture(GLuint &fbo, GLuint &fboTexture, GLuint format) const;
+
+    void initializePP();
 
     void initialize();
 

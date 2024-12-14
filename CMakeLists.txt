@@ -3,7 +3,7 @@ project(matrix)
 
 set(CMAKE_CXX_STANDARD 20)
 
-set( RC_DEPENDS "" )
+set(RC_DEPENDS "")
 
 file(MAKE_DIRECTORY "generated")
 
@@ -39,11 +39,13 @@ include_directories("generated")
 
 
 # Embed files
-embed_resource( "assets/help_message.txt" "generated/help_message.h"  "helpMessage" )
-embed_resource( "assets/apps_message.txt" "generated/apps_message.h"  "appsMessage" )
-embed_resource( "assets/shaders/triangle.glsl" "generated/triangle_shader.h"  "triangleShader" )
-embed_resource( "assets/shaders/vertex/cursor_motion.glsl" "generated/cursor_motion_vertex_shader.h"  "cursorMotionVertexShader" )
-embed_resource( "assets/shaders/fragment/debug.glsl" "generated/debug_fragment_shader.h"  "debugFragmentShader" )
+embed_resource("assets/help_message.txt" "generated/help_message.h" "helpMessage")
+embed_resource("assets/apps_message.txt" "generated/apps_message.h" "appsMessage")
+embed_resource("assets/shaders/triangle.glsl" "generated/triangle_shader.h" "triangleShader")
+embed_resource("assets/shaders/vertex/cursor_motion.vert" "generated/cursor_motion_vertex_shader.h" "cursorMotionVertexShader")
+embed_resource("assets/shaders/fragment/debug.frag" "generated/debug_fragment_shader.h" "debugFragmentShader")
+embed_resource("assets/shaders/fragment/basic_texture_fragment_shader.frag" "generated/basic_texture_fragment_shader.h" "basicTextureFragmentShader")
+embed_resource("assets/shaders/vertex/basic_texture_vertex_shader.vert" "generated/basic_texture_vertex_shader.h" "basicTextureVertexShader")
 
 add_executable(matrix
         src/main.cpp
@@ -57,7 +59,6 @@ add_executable(matrix
         src/apps.cpp
         src/apps/matrix.cpp
         src/apps/debug.cpp
-
 )
 
 target_link_libraries(

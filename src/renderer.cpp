@@ -3,6 +3,8 @@
 #include <cstring>
 #include <shader.h>
 #include <vector>
+#include "basic_texture_fragment_shader.h"
+#include "basic_texture_vertex_shader.h"
 
 
 #ifdef __linux__
@@ -45,15 +47,6 @@ void renderer::setupSignalHandling() {
     std::signal(SIGSTOP, handler);
 }
 #endif
-
-
-void createFrameBuffer(GLuint &fbo) {
-    glCreateFramebuffers(1, &fbo);
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        std::cerr << "Framebuffer is not complete" << std::endl;
-        exit(1);
-    }
-}
 
 void renderer::makeContext() {
     if (opts->wallpaperMode) {
@@ -98,7 +91,7 @@ void renderer::makeContext() {
         } else {
             x11MouseEvents = true;
             XIEventMask evmask;
-            unsigned char mask[(XI_LASTEVENT + 7)/8] = { 0 };
+            unsigned char mask[(XI_LASTEVENT + 7) / 8] = {0};
             evmask.deviceid = XIAllDevices;
             evmask.mask_len = sizeof(mask);
             evmask.mask = mask;
@@ -157,9 +150,60 @@ void renderer::makeContext() {
 }
 
 void renderer::makeFrameBuffers() {
-    createFrameBuffer(fboC);
-    createFrameBuffer(fboM);
-    createFrameBuffer(fboP);
+    // Create the framebuffers
+    createFrameBufferTexture(fboC, fboCTexture, GL_RGBA);
+    createFrameBufferTexture(fboM, fboMTexture, GL_RGB);
+    createFrameBufferTexture(fboP, fboPTexture, GL_RGB);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // Create renderbuffer
+    glGenRenderbuffers(1, &RBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, RBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, opts->width, opts->height);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
+}
+
+void renderer::createFrameBufferTexture(GLuint &fbo, GLuint &fboTexture, const GLuint format) const {
+    glCreateFramebuffers(1, &fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+    glGenTextures(1, &fboTexture);
+    glBindTexture(GL_TEXTURE_2D, fboTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, format, opts->width, opts->height, 0, format, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fboTexture, 0);
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        std::cerr << "Framebuffer is not complete" << std::endl;
+        exit(1);
+    }
+}
+
+void renderer::initializePP() {
+    // Create VAO for full-screen quad
+    glGenVertexArrays(1, &ppFullQuadBuffer);
+    glBindVertexArray(ppFullQuadBuffer);
+
+    glGenBuffers(1, &ppFullQuadBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, ppFullQuadBuffer);
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(ppFullQuadBufferData), ppFullQuadBufferData, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), nullptr);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void *)(2 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
+
+    // Create the final post-processing program
+    ppFinalProgram = createProgram();
+    loadShaderInternal(basicTextureVertexShader, sizeof(basicTextureVertexShader), GL_VERTEX_SHADER);
+    loadShaderInternal(basicTextureFragmentShader, sizeof(basicTextureFragmentShader), GL_FRAGMENT_SHADER);
+    linkProgram();
+
+    // Create option specific post-processing programs
 }
 
 void renderer::initialize() {
@@ -171,6 +215,7 @@ void renderer::initialize() {
     makeFrameBuffers();
     clock->initialize();
     loadApp();
+    initializePP();
 }
 
 void renderer::swapBuffers() {
@@ -207,11 +252,14 @@ void renderer::destroy() const {
     }
     glDeleteProgram(program);
     glDeleteFramebuffers(1, &fboC);
+    glDeleteTextures(1, &fboCTexture);
     glDeleteFramebuffers(1, &fboM);
+    glDeleteTextures(1, &fboMTexture);
     glDeleteFramebuffers(1, &fboP);
+    glDeleteTextures(1, &fboPTexture);
 }
 
-void renderer::getEvents() {
+void renderer::getEvents() const {
     clock->calculateDeltaTime();
 #ifdef __linux__
     if (x11) {
@@ -265,7 +313,7 @@ void renderer::linkProgram() const {
     linkProgram(program);
 }
 
-void renderer::linkProgram(const GLuint program) const {
+void renderer::linkProgram(const GLuint program) {
     GLint Result = GL_FALSE;
     int InfoLogLength;
 
@@ -300,7 +348,7 @@ void renderer::useProgram(const GLuint program) {
     glUseProgram(program);
 }
 
-void renderer::useProgram() {
+void renderer::useProgram() const {
     useProgram(program);
 }
 
@@ -318,9 +366,24 @@ void renderer::destroyApp() const {
 }
 
 void renderer::frameBegin() const {
-    // glBindFramebuffer(GL_FRAMEBUFFER, fboC);
+    glBindFramebuffer(GL_FRAMEBUFFER, fboC);
 }
 
 void renderer::frameEnd() const {
-    // glBindFramebuffer(GL_FRAMEBUFFER, fboM);
+    // Handle post-processing
+    // if (opts->postProcessingOptions & GHOSTING) {
+    //     glBindFramebuffer(GL_FRAMEBUFFER, fboM);
+    //     glClear(GL_COLOR_BUFFER_BIT);
+    //     useProgram();
+    // }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    useProgram(ppFinalProgram);
+    glUniform1i(glGetUniformLocation(ppFinalProgram, "u_texture"), 0);
+    glBindVertexArray(ppFullQuadBuffer);
+    glDisable(GL_DEPTH_TEST);
+    glBindTexture(GL_TEXTURE_2D, fboCTexture);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
 }

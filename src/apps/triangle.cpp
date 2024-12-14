@@ -9,6 +9,7 @@ static constexpr GLfloat triangleBufferData[] = {
 void TriangleApp::setup() {
     program = rnd->createProgram();
     rnd->loadShader(triangleShader, sizeof(triangleShader));
+    rnd->useProgram();
 
     GLuint VertexArrayID;
     glGenVertexArrays(1, &VertexArrayID);
@@ -17,6 +18,25 @@ void TriangleApp::setup() {
     glGenBuffers(1, &vertexBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(triangleBufferData), triangleBufferData, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(
+            0,
+            2,
+            GL_FLOAT,
+            GL_FALSE,
+            5 * sizeof(float),
+            nullptr
+        );
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(
+        1,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        5 * sizeof(float),
+        reinterpret_cast<void *>(2 * sizeof(float))
+    );
+    glEnableVertexAttribArray(1);
 
     ui_Time = glGetUniformLocation(rnd->program, "u_Time");
 }
@@ -36,29 +56,10 @@ void TriangleApp::loop() {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glVertexAttribPointer(
-        0,
-        2,
-        GL_FLOAT,
-        GL_FALSE,
-        5 * sizeof(float),
-        nullptr
-    );
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(
-        1,
-        3,
-        GL_FLOAT,
-        GL_FALSE,
-        5 * sizeof(float),
-        reinterpret_cast<void *>(2 * sizeof(float))
-    );
-    glEnableVertexAttribArray(1);
+    glBindVertexArray(vertexBuffer);
     glDrawArrays(GL_TRIANGLES, 0, 3);
-    glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
+    // glDisableVertexAttribArray(0);
+    // glDisableVertexAttribArray(1);
 }
 
 void TriangleApp::destroy() {
