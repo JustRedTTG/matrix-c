@@ -1,5 +1,7 @@
 #include "apps/triangle.h"
 
+#include <gl_errors.h>
+
 static constexpr GLfloat triangleBufferData[] = {
     -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
     0.0f, 0.5f, 0.0f, 1.0f, 0.0f,
@@ -11,31 +13,31 @@ void TriangleApp::setup() {
     rnd->loadShader(triangleShader, sizeof(triangleShader));
     rnd->useProgram();
 
-    glGenVertexArrays(1, &vertexArray);
-    glBindVertexArray(vertexArray);
+    GL_CHECK(glGenVertexArrays(1, &vertexArray));
+    GL_CHECK(glBindVertexArray(vertexArray));
 
-    glGenBuffers(1, &vertexBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(triangleBufferData), triangleBufferData, GL_STATIC_DRAW);
+    GL_CHECK(glGenBuffers(1, &vertexBuffer));
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer));
+    GL_CHECK(glBufferData(GL_ARRAY_BUFFER, sizeof(triangleBufferData), triangleBufferData, GL_STATIC_DRAW));
 
-    glVertexAttribPointer(
+    GL_CHECK(glVertexAttribPointer(
             0,
             2,
             GL_FLOAT,
             GL_FALSE,
             5 * sizeof(float),
             nullptr
-        );
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(
+        ));
+    GL_CHECK(glEnableVertexAttribArray(0));
+    GL_CHECK(glVertexAttribPointer(
         1,
         3,
         GL_FLOAT,
         GL_FALSE,
         5 * sizeof(float),
         reinterpret_cast<void *>(2 * sizeof(float))
-    );
-    glEnableVertexAttribArray(1);
+    ));
+    GL_CHECK(glEnableVertexAttribArray(1));
 
     ui_Time = glGetUniformLocation(rnd->program, "u_Time");
 }
@@ -50,15 +52,15 @@ void TriangleApp::loop() {
         m = 1;
     }
 
-    glUniform1f(ui_Time, t);
+    GL_CHECK(glUniform1f(ui_Time, t));
 
     rnd->clear();
 
-    glBindVertexArray(vertexBuffer);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    GL_CHECK(glBindVertexArray(vertexBuffer));
+    GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
 }
 
 void TriangleApp::destroy() {
-    glDeleteBuffers(1, &vertexBuffer);
-    glDeleteVertexArrays(1, &vertexArray);
+    GL_CHECK(glDeleteBuffers(1, &vertexBuffer));
+    GL_CHECK(glDeleteVertexArrays(1, &vertexArray));
 }

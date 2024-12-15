@@ -3,6 +3,11 @@
 #include <apps.h>
 #include <GL/glew.h>
 
+static constexpr GLuint indices[] = {
+    0, 1, 2, // First triangle
+    2, 3, 0 // Second triangle
+};
+
 class DebugApp final : public App {
 public:
     explicit DebugApp(renderer *rnd) : App(rnd) {};

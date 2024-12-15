@@ -32,7 +32,6 @@ int main(const int argc, char *argv[]) {
         rnd->swapBuffers();
     }
 
-    rnd->destroyApp();
     rnd->destroy();
     return 0;
 }

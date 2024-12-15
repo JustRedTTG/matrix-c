@@ -107,7 +107,7 @@ void renderer::makeContext() {
 
         glXMakeCurrent(display, window, ctx);
 
-        glViewport(0, 0, opts->width, opts->height);
+        GL_CHECK(glViewport(0, 0, opts->width, opts->height));
 
         x11 = true;
 
@@ -239,6 +239,7 @@ void renderer::swapBuffers() {
 }
 
 void renderer::destroy() const {
+    destroyApp();
 #ifdef __linux__
     if (x11) {
         XCloseDisplay(display);
@@ -252,23 +253,23 @@ void renderer::destroy() const {
     }
 
     if (vertexShader) {
-        glDetachShader(program, vertexShader);
-        glDeleteShader(vertexShader);
+        GL_CHECK(glDetachShader(program, vertexShader));
+        GL_CHECK(glDeleteShader(vertexShader));
     }
     if (fragmentShader) {
-        glDetachShader(program, fragmentShader);
-        glDeleteShader(fragmentShader);
+        GL_CHECK(glDetachShader(program, fragmentShader));
+        GL_CHECK(glDeleteShader(fragmentShader));
     }
-    glDeleteFramebuffers(1, &fboC);
-    glDeleteTextures(1, &fboCTexture);
-    glDeleteFramebuffers(1, &fboM);
-    glDeleteTextures(1, &fboMTexture);
-    glDeleteFramebuffers(1, &fboP);
-    glDeleteTextures(1, &fboPTexture);
-    glDeleteRenderbuffers(1, &RBO);
-    glDeleteVertexArrays(1, &ppFullQuadArray);
-    glDeleteBuffers(1, &ppFullQuadBuffer);
-    glDeleteProgram(ppFinalProgram);
+    GL_CHECK(glDeleteFramebuffers(1, &fboC));
+    GL_CHECK(glDeleteTextures(1, &fboCTexture));
+    GL_CHECK(glDeleteFramebuffers(1, &fboM));
+    GL_CHECK(glDeleteTextures(1, &fboMTexture));
+    GL_CHECK(glDeleteFramebuffers(1, &fboP));
+    GL_CHECK(glDeleteTextures(1, &fboPTexture));
+    GL_CHECK(glDeleteRenderbuffers(1, &RBO));
+    GL_CHECK(glDeleteVertexArrays(1, &ppFullQuadArray));
+    GL_CHECK(glDeleteBuffers(1, &ppFullQuadBuffer));
+    GL_CHECK(glDeleteProgram(ppFinalProgram));
     delete clock;
     delete events;
     delete opts;
@@ -306,15 +307,15 @@ void renderer::loadShader(const char *source, const GLuint type) {
 
 void renderer::loadShader(const char *source, GLuint type, GLuint program) {
     const GLuint shader = glCreateShader(type);
-    glShaderSource(shader, 1, &source, nullptr);
-    glCompileShader(shader);
+    GL_CHECK(glShaderSource(shader, 1, &source, nullptr));
+    GL_CHECK(glCompileShader(shader));
     GLint success;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+    GL_CHECK(glGetShaderiv(shader, GL_COMPILE_STATUS, &success));
     if (!success) {
         GLint logLength;
-        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logLength);
+        GL_CHECK(glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logLength));
         std::vector<char> log(logLength);
-        glGetShaderInfoLog(shader, logLength, &logLength, log.data());
+        GL_CHECK(glGetShaderInfoLog(shader, logLength, &logLength, log.data()));
         std::cerr << "Shader compilation failed: " << log.data() << std::endl;
     }
     GL_CHECK(glAttachShader(program, shader));
@@ -391,6 +392,7 @@ void renderer::clear() const {
     GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT));
 }
+
 void renderer::frameEnd() const {
     // Handle post-processing
     // if (opts->postProcessingOptions & GHOSTING) {
@@ -404,7 +406,6 @@ void renderer::frameEnd() const {
     useProgram(ppFinalProgram);
     GL_CHECK(glUniform1i(glGetUniformLocation(ppFinalProgram, "u_texture"), 0));
     GL_CHECK(glBindVertexArray(ppFullQuadArray));
-    glDisable(GL_DEPTH_TEST);
-    glBindTexture(GL_TEXTURE_2D, fboCTexture);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D, fboCTexture));
+    GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 6));
 }

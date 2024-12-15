@@ -6,11 +6,6 @@
 #include "debug_fragment_shader.h"
 #include <helper.h>
 
-static constexpr GLuint indices[] = {
-    0, 1, 2, // First triangle
-    2, 3, 0  // Second triangle
-};
-
 void DebugApp::setup() {
     createQuadVertexData(rnd, 50.0, 50.0, vertices);
 
@@ -20,8 +15,12 @@ void DebugApp::setup() {
     rnd->linkProgram();
     rnd->useProgram();
 
-    GLuint ui_ScreenSize = glGetUniformLocation(rnd->program, "u_ScreenSize");
-    GL_CHECK(glUniform2f(ui_ScreenSize, static_cast<GLfloat>(rnd->opts->width), static_cast<GLfloat>(rnd->opts->height)));
+    GL_CHECK(glUniform2f(
+        glGetUniformLocation(rnd->program, "u_ScreenSize"),
+        static_cast<GLfloat>(rnd->opts->width),
+        static_cast<GLfloat>(rnd->opts->height)
+    ));
+    ui_MousePosition = glGetUniformLocation(rnd->program, "u_MousePosition");
 
     GL_CHECK(glGenVertexArrays(1, &vertexArray));
     GL_CHECK(glBindVertexArray(vertexArray));
@@ -43,13 +42,15 @@ void DebugApp::setup() {
     GL_CHECK(glGenBuffers(1, &indexBuffer));
     GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer));
     GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
-
-    ui_MousePosition = glGetUniformLocation(rnd->program, "u_MousePosition");
 }
 
 void DebugApp::loop() {
     rnd->useProgram(program);
-    glUniform2f(ui_MousePosition, static_cast<GLfloat>(rnd->events->mouseX), static_cast<GLfloat>(rnd->events->mouseY));
+    GL_CHECK(glUniform2f(
+        ui_MousePosition,
+        static_cast<GLfloat>(rnd->events->mouseX),
+        static_cast<GLfloat>(rnd->events->mouseY)
+    ));
 
     rnd->clear();
 
@@ -60,7 +61,7 @@ void DebugApp::loop() {
 }
 
 void DebugApp::destroy() {
-    glDeleteBuffers(1, &vertexBuffer);
-    glDeleteBuffers(1, &indexBuffer);
-    glDeleteVertexArrays(1, &vertexArray); // Delete the VAO
+    GL_CHECK(glDeleteBuffers(1, &vertexBuffer));
+    GL_CHECK(glDeleteBuffers(1, &indexBuffer));
+    GL_CHECK(glDeleteVertexArrays(1, &vertexArray));
 }
