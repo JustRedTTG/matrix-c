@@ -33,6 +33,7 @@ find_package(glfw3 REQUIRED)
 include_directories(${GLEW_INCLUDE_DIRS})
 include_directories(${OPENGL_INCLUDE_DIR})
 include_directories(${GLFW_INCLUDE_DIRS})
+include_directories(${Boost_INCLUDE_DIRS})
 
 include_directories("include")
 include_directories("generated")
@@ -67,6 +68,7 @@ add_executable(matrix
 target_link_libraries(
         matrix
         ${OPENGL_LIBRARIES} GL GLEW glfw
+        ${Boost_LIBRARIES}
 )
 
 if (UNIX)  # This includes Linux and other Unix-like systems
