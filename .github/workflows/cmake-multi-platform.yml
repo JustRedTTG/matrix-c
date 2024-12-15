@@ -71,8 +71,7 @@ jobs:
         if (-not (Test-Path -Path "./vcpkg")) {
           git clone https://github.com/microsoft/vcpkg.git
         }
-        Set-Location -Path ./vcpkg
-        .\bootstrap-vcpkg.bat
+        .\vcpkg\bootstrap-vcpkg.bat
 
     - name: Install packages using vcpkg on Windows
       if: matrix.os == 'windows-latest'
