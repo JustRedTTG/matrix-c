@@ -8,7 +8,8 @@
 
 void DebugApp::setup() {
     // Enable ghosting post-processing effect
-    rnd->opts->postProcessingOptions |= GHOSTING;
+    rnd->opts->postProcessingOptions = 0xFF;
+    rnd->opts->blurSize = 2.0f;
     createQuadVertexData(rnd, 50.0, 50.0, vertices);
 
     program = rnd->createProgram();

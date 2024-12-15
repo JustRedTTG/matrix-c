@@ -60,7 +60,10 @@ struct renderer {
     GLuint fragmentShader{};
 
     GLuint ppGhostingProgram{};
+    GLuint ppBlurProgram{};
+
     GLuint ppFinalProgram{};
+
     GLuint ppFullQuadArray{};
     GLuint ppFullQuadBuffer{};
 

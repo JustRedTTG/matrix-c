@@ -47,6 +47,7 @@ embed_resource("assets/shaders/fragment/debug.frag" "generated/debug_fragment_sh
 embed_resource("assets/shaders/fragment/basic_texture_fragment_shader.frag" "generated/basic_texture_fragment_shader.h" "basicTextureFragmentShader")
 embed_resource("assets/shaders/vertex/basic_texture_vertex_shader.vert" "generated/basic_texture_vertex_shader.h" "basicTextureVertexShader")
 embed_resource("assets/shaders/fragment/ghosting_fragment_shader.frag" "generated/ghosting_fragment_shader.h" "ghostingFragmentShader")
+embed_resource("assets/shaders/fragment/blur_fragment_shader.frag" "generated/blur_fragment_shader.h" "blurFragmentShader")
 
 add_executable(matrix
         src/main.cpp

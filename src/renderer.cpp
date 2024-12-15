@@ -7,6 +7,7 @@
 #include "basic_texture_fragment_shader.h"
 #include "basic_texture_vertex_shader.h"
 #include "ghosting_fragment_shader.h"
+#include "blur_fragment_shader.h"
 
 
 #ifdef __linux__
@@ -232,6 +233,12 @@ void renderer::initializePP() {
         loadShaderInternal(ghostingFragmentShader, sizeof(ghostingFragmentShader), GL_FRAGMENT_SHADER);
         linkProgram();
     }
+    if (opts->postProcessingOptions & BLUR) {
+        ppBlurProgram = createProgram();
+        loadShaderInternal(basicTextureVertexShader, sizeof(basicTextureVertexShader), GL_VERTEX_SHADER);
+        loadShaderInternal(blurFragmentShader, sizeof(blurFragmentShader), GL_FRAGMENT_SHADER);
+        linkProgram();
+    }
 
     GL_CHECK(glEnable(GL_BLEND));
     GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
@@ -251,7 +258,7 @@ void renderer::initialize() {
 }
 
 void renderer::swapBuffers() {
-    glFlush();
+    GL_CHECK(glFlush());
 #ifdef __linux__
     if (x11) {
         x11_SwapBuffers(this);
@@ -305,6 +312,9 @@ void renderer::destroy() const {
     GL_CHECK(glDeleteProgram(ppFinalProgram));
     if (opts->postProcessingOptions & GHOSTING) {
         GL_CHECK(glDeleteProgram(ppGhostingProgram));
+    }
+    if (opts->postProcessingOptions & BLUR) {
+        GL_CHECK(glDeleteProgram(ppBlurProgram));
     }
     delete clock;
     delete events;
@@ -472,14 +482,30 @@ void renderer::frameEnd() {
         GL_CHECK(glUniform1i(glGetUniformLocation(ppGhostingProgram, "u_textureP"), 1));
         GL_CHECK(glBindVertexArray(ppFullQuadArray));
 
-        // Sample the textures
-
         // Bind the framebuffer textures
         GL_CHECK(glActiveTexture(GL_TEXTURE0));
         GL_CHECK(glBindTexture(GL_TEXTURE_2D, fboCTextureOutput));
 
         GL_CHECK(glActiveTexture(GL_TEXTURE1));
         GL_CHECK(glBindTexture(GL_TEXTURE_2D, fboPTextureOutput));
+
+        GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 6));
+
+        _swapPPBuffers();
+    }
+    if (opts->postProcessingOptions & BLUR) {
+        _sampleFrameBuffersForPostProcessing();
+        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fboM));
+        _clear();
+        useProgram(ppBlurProgram);
+
+        GL_CHECK(glUniform1i(glGetUniformLocation(ppBlurProgram, "u_textureC"), 0));
+        GL_CHECK(glUniform1f(glGetUniformLocation(ppBlurProgram, "u_blurSize"), opts->blurSize));
+        GL_CHECK(glBindVertexArray(ppFullQuadArray));
+
+        // Bind the framebuffer textures
+        GL_CHECK(glActiveTexture(GL_TEXTURE0));
+        GL_CHECK(glBindTexture(GL_TEXTURE_2D, fboCTextureOutput));
 
         GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 6));
 

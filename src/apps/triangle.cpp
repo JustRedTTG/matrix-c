@@ -11,6 +11,8 @@ static constexpr GLfloat triangleBufferData[] = {
 void TriangleApp::setup() {
     program = rnd->createProgram();
     rnd->opts->postProcessingOptions |= GHOSTING;
+    rnd->opts->postProcessingOptions |= BLUR;
+    rnd->opts->blurSize = 0.2f;
     rnd->loadShader(triangleShader, sizeof(triangleShader));
     rnd->useProgram();
 
