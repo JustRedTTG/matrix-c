@@ -10,8 +10,9 @@ struct groupedEvents;
 #include <X11/extensions/XInput2.h>
 
 void handleX11Events(const renderer *rnd);
-void handleGLFWEvents(const renderer *rnd);
 #endif
+
+void handleGLFWEvents(const renderer *rnd);
 
 struct groupedEvents {
     bool quit;
