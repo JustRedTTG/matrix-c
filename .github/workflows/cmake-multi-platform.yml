@@ -124,5 +124,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         path: |
-          ${{ steps.strings.outputs.build-output-dir }}/bin/*
-          ${{ steps.strings.outputs.build-output-dir }}/test/*
+          ${{ steps.strings.outputs.build-output-dir }}/Release\matrix.exe
+          ${{ steps.strings.outputs.build-output-dir }}/Release\matrix
