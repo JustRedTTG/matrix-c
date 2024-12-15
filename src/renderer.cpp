@@ -9,16 +9,15 @@
 #include "ghosting_fragment_shader.h"
 #include "blur_fragment_shader.h"
 
-
 #ifdef __linux__
 #include "x11.h"
 #include <csignal>
 #include <signal.h>
-#endif
 
 auto glXCreateContextAttribsARB = reinterpret_cast<glXCreateContextAttribsARBProc>(
     glXGetProcAddressARB(
         reinterpret_cast<const GLubyte *>("glXCreateContextAttribsARB")));
+#endif
 
 renderer *renderer::instance = nullptr;
 
@@ -275,7 +274,7 @@ void renderer::destroy() const {
         XCloseDisplay(display);
     }
 #else
-    if () {}
+    if constexpr (false) {}
 #endif
     else {
         glfwDestroyWindow(glfwWindow);

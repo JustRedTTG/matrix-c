@@ -39,6 +39,7 @@ struct renderer {
     Window desktop{};
     Window window{};
     Window root{};
+    GLXContext ctx{};
     int screenNum = -1;
     GLXFBConfig *fbcs = nullptr;
     XVisualInfo *vi = nullptr;
@@ -57,7 +58,7 @@ struct renderer {
     App *app;
     tickRateClock *clock;
     GLFWwindow *glfwWindow = nullptr;
-    GLXContext ctx{};
+
     GLuint program{};
     GLuint vertexShader{};
     GLuint fragmentShader{};
