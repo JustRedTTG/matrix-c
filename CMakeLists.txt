@@ -67,7 +67,9 @@ add_executable(matrix
 
 target_link_libraries(
         matrix
-        ${OPENGL_LIBRARIES} GL GLEW glfw
+        ${OPENGL_LIBRARIES}
+        ${GLEW_LIBRARIES}
+        glfw
         ${Boost_LIBRARIES}
 )
 
