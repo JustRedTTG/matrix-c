@@ -71,6 +71,7 @@ target_link_libraries(
 
 if (UNIX)  # This includes Linux and other Unix-like systems
     find_package(X11 REQUIRED)
+    include_directories("include-linux")
     include_directories(${X11_INCLUDE_DIR})
     target_sources(matrix PRIVATE src/x11.cpp)
     target_link_libraries(matrix ${X11_LIBRARIES} X11 Xrender Xi)
