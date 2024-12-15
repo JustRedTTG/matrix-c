@@ -12,5 +12,4 @@ struct tickRateClock {
     std::chrono::time_point<std::chrono::system_clock> now();
 };
 
-
 #endif //CLOCK_H

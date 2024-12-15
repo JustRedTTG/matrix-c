@@ -2,9 +2,10 @@
 #define EVENTS_H
 
 struct groupedEvents;
-#ifdef __linux__
-#include <iostream>
 #include <renderer.h>
+#include <iostream>
+
+#ifdef __linux__
 #include <X11/Xlib.h>
 #include <X11/extensions/XI2.h>
 #include <X11/extensions/XInput2.h>
