@@ -1,4 +1,5 @@
 #ifndef EVENTS_H
+#include "clock.h"
 #define EVENTS_H
 
 struct groupedEvents;
@@ -19,7 +20,7 @@ struct groupedEvents {
     bool quit;
     long mouseX, mouseY;
     bool mouseLeft, mouseRight, mouseMiddle;
-    std::chrono::time_point<std::chrono::system_clock> lastMouseMotion{};
+    boost::chrono::steady_clock::time_point lastMouseMotion{};
 };
 
 #endif //EVENTS_H

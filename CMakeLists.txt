@@ -2,9 +2,6 @@ cmake_minimum_required(VERSION 3.30)
 project(matrix)
 
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
 set(RC_DEPENDS "")
 
 file(MAKE_DIRECTORY "generated")
@@ -29,6 +26,7 @@ function(embed_resource resource_file_name source_file_name variable_name)
 endfunction()
 
 find_package(GLEW REQUIRED)
+find_package(Boost REQUIRED COMPONENTS chrono)
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
 

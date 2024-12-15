@@ -1,15 +1,15 @@
 #ifndef CLOCK_H
 #define CLOCK_H
-#include <chrono>
+#include <boost/chrono.hpp>
 
 struct tickRateClock {
-    std::chrono::time_point<std::chrono::system_clock> lastTime{};
+    boost::chrono::steady_clock::time_point lastTime{};
     float deltaTime{};
 
     void calculateDeltaTime();
     void initialize();
 
-    std::chrono::time_point<std::chrono::system_clock> now();
+    static boost::chrono::steady_clock::time_point now();
 };
 
 #endif //CLOCK_H

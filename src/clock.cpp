@@ -1,18 +1,17 @@
 #include "clock.h"
 
 void tickRateClock::calculateDeltaTime() {
-    const std::chrono::time_point<std::chrono::system_clock> currentTime = now();
-    const std::chrono::duration<float> deltaTime = std::chrono::duration_cast<std::chrono::duration<float> >(
+    const boost::chrono::steady_clock::time_point currentTime = now();
+    const boost::chrono::duration<float> deltaTime = boost::chrono::duration_cast<boost::chrono::duration<float>>(
         currentTime - lastTime);
-    this->lastTime = currentTime; // Update last time
+    this->lastTime = currentTime;
     this->deltaTime = deltaTime.count();
 }
 
 void tickRateClock::initialize() {
-    this->lastTime = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
-        std::chrono::high_resolution_clock::now());
+    this->lastTime = now();
 }
 
-std::chrono::time_point<std::chrono::system_clock> tickRateClock::now() {
-    return std::chrono::time_point_cast<std::chrono::system_clock::duration>(std::chrono::high_resolution_clock::now());
+boost::chrono::steady_clock::time_point tickRateClock::now() {
+    return boost::chrono::steady_clock::now();
 }
