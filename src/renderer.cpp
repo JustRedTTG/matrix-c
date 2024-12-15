@@ -28,14 +28,21 @@ renderer::renderer(options *opts) {
     instance = this;
 }
 
-void initializeGlew() {
-    glewExperimental = GL_TRUE;
-    if (glewInit() != GLEW_OK) {
-        std::cerr << "Couldn't initialize GLEW" << std::endl;
+void initializeGlad() {
+    if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
+        std::cerr << "Failed to initialize GLAD" << std::endl;
         exit(1);
     }
 }
 #ifdef __linux__
+
+void glXInitializeGlad() {
+    if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glXGetProcAddress))) {
+        std::cerr << "Failed to initialize GLAD" << std::endl;
+        exit(1);
+    }
+}
+
 void renderer::handleSignal(const int signal) {
     if (signal == SIGINT || signal == SIGTERM || signal == SIGSTOP) {
         instance->events->quit = true;
@@ -108,6 +115,8 @@ void renderer::makeContext() {
 
         glXMakeCurrent(display, window, ctx);
 
+        glXInitializeGlad();
+
         GL_CHECK(glViewport(0, 0, opts->width, opts->height));
 
         x11 = true;
@@ -150,6 +159,8 @@ void renderer::makeContext() {
     }
 
     glfwMakeContextCurrent(glfwWindow);
+
+    initializeGlad();
 }
 
 void renderer::makeFrameBuffers() {
@@ -248,7 +259,6 @@ void renderer::initialize() {
     setupSignalHandling();
 #endif
     makeContext();
-    initializeGlew();
     makeFrameBuffers();
     clock->initialize();
     loadApp();

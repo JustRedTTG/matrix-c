@@ -2,7 +2,7 @@
 #define MATRIX_H
 #include <apps.h>
 #include <triangle_shader.h>
-#include <GL/glew.h>
+#include "glad.h"
 
 class MatrixApp final : public App {
 public:

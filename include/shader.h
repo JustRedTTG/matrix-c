@@ -4,7 +4,7 @@
 #include <string>
 #include <sstream>
 #include <array>
-#include <GL/glew.h>
+#include "glad.h"
 
 std::array<std::stringstream, 2> parseShader(const std::string *source);
 

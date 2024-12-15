@@ -1,7 +1,7 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 #include <apps.h>
-#include <GL/glew.h>
+#include "glad.h"
 
 static constexpr GLuint indices[] = {
     0, 1, 2, // First triangle

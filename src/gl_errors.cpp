@@ -3,7 +3,7 @@
 #include <iostream>
 #include <ostream>
 #include <string>
-#include <GL/glew.h>
+#include "glad.h"
 
 void checkGLError(const char *call, const char *file, int line) {
     GLenum err;

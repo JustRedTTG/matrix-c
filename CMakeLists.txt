@@ -24,16 +24,13 @@ function(embed_resource resource_file_name source_file_name variable_name)
 endfunction()
 
 set(BUILD_SHARED_LIBS OFF)
-set(GLEW_USE_STATIC_LIBS ON)
 set(Boost_USE_STATIC_LIBS ON)
 
-find_package(GLEW REQUIRED STATIC)
 find_package(Boost REQUIRED COMPONENTS chrono)
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED STATIC)
 
 # Include directories
-include_directories(${GLEW_INCLUDE_DIRS})
 include_directories(${OPENGL_INCLUDE_DIR})
 include_directories(${GLFW_INCLUDE_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
@@ -54,6 +51,7 @@ embed_resource("assets/shaders/fragment/blur_fragment_shader.frag" "generated/bl
 
 # Add executable
 add_executable(matrix
+        src/glad.c
         src/main.cpp
         src/shader.cpp
         src/options.cpp
@@ -72,7 +70,6 @@ add_executable(matrix
 target_link_libraries(
         matrix
         ${OPENGL_LIBRARIES}
-        ${GLEW_STATIC_LIBRARIES}
         glfw
         ${Boost_LIBRARIES}
 )

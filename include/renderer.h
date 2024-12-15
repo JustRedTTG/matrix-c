@@ -4,7 +4,7 @@
 #include <clock.h>
 #include <options.h>
 #include <events.h>
-#include <GL/glew.h>
+#include "glad.h"
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -49,14 +49,14 @@ struct renderer {
     XSetWindowAttributes swa{};
     bool x11 = false;
     bool x11MouseEvents = false;
-    int xinputOptCode;
+    int xinputOptCode{};
     static void handleSignal(int signal);
     void setupSignalHandling();
 #else
 
 #endif
     int antialiasSamples = 4;
-    App *app;
+    App *app = nullptr;
     tickRateClock *clock;
     GLFWwindow *glfwWindow = nullptr;
 

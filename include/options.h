@@ -1,7 +1,7 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 #include <cstdint>
-#include <GL/glew.h>
+#include "glad.h"
 
 #include "help_message.h"
 

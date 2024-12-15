@@ -2,7 +2,7 @@
 #define TRIANGLE_H
 #include <apps.h>
 #include <triangle_shader.h>
-#include <GL/glew.h>
+#include "glad.h"
 
 class TriangleApp final : public App {
 public:
