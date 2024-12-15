@@ -10,6 +10,7 @@ static constexpr GLfloat triangleBufferData[] = {
 
 void TriangleApp::setup() {
     program = rnd->createProgram();
+    rnd->opts->postProcessingOptions |= GHOSTING;
     rnd->loadShader(triangleShader, sizeof(triangleShader));
     rnd->useProgram();
 
@@ -53,8 +54,6 @@ void TriangleApp::loop() {
     }
 
     GL_CHECK(glUniform1f(ui_Time, t));
-
-    rnd->clear();
 
     GL_CHECK(glBindVertexArray(vertexBuffer));
     GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));

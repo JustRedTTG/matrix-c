@@ -99,9 +99,13 @@ struct renderer {
 
     void frameBegin() const;
 
+    void _clear() const;
+
     void clear() const;
 
-    void frameEnd() const;
+    void _swapPPBuffers();
+
+    void frameEnd();
 
     groupedEvents *events = nullptr;
 

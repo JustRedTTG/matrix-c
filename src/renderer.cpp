@@ -6,6 +6,7 @@
 #include <vector>
 #include "basic_texture_fragment_shader.h"
 #include "basic_texture_vertex_shader.h"
+#include "ghosting_fragment_shader.h"
 
 
 #ifdef __linux__
@@ -153,8 +154,8 @@ void renderer::makeContext() {
 void renderer::makeFrameBuffers() {
     // Create the framebuffers
     createFrameBufferTexture(fboC, fboCTexture, GL_RGBA);
-    createFrameBufferTexture(fboM, fboMTexture, GL_RGB);
-    createFrameBufferTexture(fboP, fboPTexture, GL_RGB);
+    createFrameBufferTexture(fboM, fboMTexture, GL_RGBA);
+    createFrameBufferTexture(fboP, fboPTexture, GL_RGBA);
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 
@@ -213,6 +214,15 @@ void renderer::initializePP() {
     linkProgram();
 
     // Create option specific post-processing programs
+    if (opts->postProcessingOptions & GHOSTING) {
+        ppGhostingProgram = createProgram();
+        loadShaderInternal(basicTextureVertexShader, sizeof(basicTextureVertexShader), GL_VERTEX_SHADER);
+        loadShaderInternal(ghostingFragmentShader, sizeof(ghostingFragmentShader), GL_FRAGMENT_SHADER);
+        linkProgram();
+    }
+
+    GL_CHECK(glEnable(GL_BLEND));
+    GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
 }
 
 void renderer::initialize() {
@@ -224,6 +234,7 @@ void renderer::initialize() {
     makeFrameBuffers();
     clock->initialize();
     loadApp();
+    opts->maskPostProcessingOptionsWithUserAllowed();
     initializePP();
 }
 
@@ -270,6 +281,9 @@ void renderer::destroy() const {
     GL_CHECK(glDeleteVertexArrays(1, &ppFullQuadArray));
     GL_CHECK(glDeleteBuffers(1, &ppFullQuadBuffer));
     GL_CHECK(glDeleteProgram(ppFinalProgram));
+    if (opts->postProcessingOptions & GHOSTING) {
+        GL_CHECK(glDeleteProgram(ppGhostingProgram));
+    }
     delete clock;
     delete events;
     delete opts;
@@ -384,28 +398,67 @@ void renderer::destroyApp() const {
 
 void renderer::frameBegin() const {
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fboC));
+    _clear();
 }
 
-void renderer::clear() const {
-    if (opts->postProcessingOptions & GHOSTING)
-        return;
-    GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+void renderer::_clear() const {
+    GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 0.0f));
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT));
 }
 
-void renderer::frameEnd() const {
+void renderer::clear() const {
+    // if (opts->postProcessingOptions & GHOSTING)
+    //     return;
+    _clear();
+}
+
+void renderer::_swapPPBuffers() {
+    GLuint temp = fboCTexture;
+    fboCTexture = fboMTexture;
+    fboMTexture = temp;
+    temp = fboC;
+    fboC = fboM;
+    fboM = temp;
+}
+
+void renderer::frameEnd() {
     // Handle post-processing
-    // if (opts->postProcessingOptions & GHOSTING) {
-    //     glBindFramebuffer(GL_FRAMEBUFFER, fboM);
-    //     glClear(GL_COLOR_BUFFER_BIT);
-    //     useProgram();
-    // }
+    if (opts->postProcessingOptions & GHOSTING) {
+        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fboM));
+        _clear();
+        useProgram(ppGhostingProgram);
+
+        GL_CHECK(glUniform1i(glGetUniformLocation(ppGhostingProgram, "u_textureC"), 0));
+        GL_CHECK(glUniform1i(glGetUniformLocation(ppGhostingProgram, "u_textureP"), 1));
+        GL_CHECK(glBindVertexArray(ppFullQuadArray));
+
+        // Bind the framebuffer textures
+        GL_CHECK(glActiveTexture(GL_TEXTURE0));
+        GL_CHECK(glBindTexture(GL_TEXTURE_2D, fboCTexture));
+
+        GL_CHECK(glActiveTexture(GL_TEXTURE1));
+        GL_CHECK(glBindTexture(GL_TEXTURE_2D, fboPTexture));
+
+        GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 6));
+
+        _swapPPBuffers();
+    }
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-    clear();
+    _clear();
     useProgram(ppFinalProgram);
-    GL_CHECK(glUniform1i(glGetUniformLocation(ppFinalProgram, "u_texture"), 0));
     GL_CHECK(glBindVertexArray(ppFullQuadArray));
+
+    GL_CHECK(glUniform1i(glGetUniformLocation(ppFinalProgram, "u_texture"), 0));
+    GL_CHECK(glActiveTexture(GL_TEXTURE0));
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, fboCTexture));
     GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 6));
+
+    // Swap the framebuffers
+    GLuint temp = fboPTexture;
+    fboPTexture = fboCTexture;
+    fboCTexture = temp;
+    temp = fboP;
+    fboP = fboC;
+    fboC = temp;
 }

@@ -13,6 +13,10 @@ void showHelp() {
     std::cout << helpText << std::endl;
 }
 
+void options::maskPostProcessingOptionsWithUserAllowed() {
+    postProcessingOptions &= userAllowedPostProcessingOptions;
+}
+
 options* parseOptions(int argc, char *argv[]) {
     auto *opts = new options();
     bool hasSetApp = false;
@@ -48,3 +52,4 @@ options* parseOptions(int argc, char *argv[]) {
 
     return opts;
 }
+

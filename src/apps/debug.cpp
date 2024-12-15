@@ -7,6 +7,8 @@
 #include <helper.h>
 
 void DebugApp::setup() {
+    // Enable ghosting post-processing effect
+    rnd->opts->postProcessingOptions |= GHOSTING;
     createQuadVertexData(rnd, 50.0, 50.0, vertices);
 
     program = rnd->createProgram();
@@ -51,8 +53,6 @@ void DebugApp::loop() {
         static_cast<GLfloat>(rnd->events->mouseX),
         static_cast<GLfloat>(rnd->events->mouseY)
     ));
-
-    rnd->clear();
 
     GL_CHECK(glBindVertexArray(vertexArray));
     GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer));

@@ -16,6 +16,8 @@ struct options {
     uint8_t postProcessingOptions = 0;
     uint8_t userAllowedPostProcessingOptions = 0xFF;
     char* app = new char[256];
+
+    void maskPostProcessingOptionsWithUserAllowed();
 };
 
 options* parseOptions(int argc, char *argv[]);
