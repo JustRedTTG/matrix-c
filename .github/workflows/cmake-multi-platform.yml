@@ -60,7 +60,7 @@ jobs:
           ${{ github.workspace }}/vcpkg/downloads
           ${{ github.workspace }}/vcpkg/installed
           ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.bat
-          ${{ github.workspace }}/vcpkg/vcpkg
+          ${{ github.workspace }}/vcpkg/vcpkg.exe
         key: ${{ runner.os }}-vcpkg-${{ hashFiles('**/vcpkg.json') }}
         restore-keys: |
           ${{ runner.os }}-vcpkg-
