@@ -70,6 +70,13 @@ struct renderer {
     GLuint fboMTexture{};
     GLuint fboP{};
     GLuint fboPTexture{};
+
+    GLuint fboCOutput{};
+    GLuint fboCTextureOutput{};
+    GLuint fboMOutput{};
+    GLuint fboMTextureOutput{};
+    GLuint fboPOutput{};
+    GLuint fboPTextureOutput{};
     GLuint RBO{};
 
     void makeWindow();
@@ -105,6 +112,10 @@ struct renderer {
 
     void _swapPPBuffers();
 
+    void _resolveMultisampledFramebuffer(GLuint srcFbo, GLuint dstFbo) const;
+
+    void _sampleFrameBuffersForPostProcessing() const;
+
     void frameEnd();
 
     groupedEvents *events = nullptr;
@@ -116,7 +127,7 @@ struct renderer {
     void makeContext();
 
     void makeFrameBuffers();
-    void createFrameBufferTexture(GLuint &fbo, GLuint &fboTexture, GLuint format) const;
+    void createFrameBufferTexture(GLuint &fbo, GLuint &fboTexture, GLuint format, bool multiSampled) const;
 
     void initializePP();
 

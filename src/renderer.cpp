@@ -129,6 +129,7 @@ void renderer::makeContext() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+    glfwWindowHint(GLFW_SAMPLES, antialiasSamples);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     if (opts->fullscreen) {
         GLFWmonitor *primaryMonitor = glfwGetPrimaryMonitor();
@@ -153,16 +154,19 @@ void renderer::makeContext() {
 
 void renderer::makeFrameBuffers() {
     // Create the framebuffers
-    createFrameBufferTexture(fboC, fboCTexture, GL_RGBA);
-    createFrameBufferTexture(fboM, fboMTexture, GL_RGBA);
-    createFrameBufferTexture(fboP, fboPTexture, GL_RGBA);
+    createFrameBufferTexture(fboC, fboCTexture, GL_RGBA, true);
+    createFrameBufferTexture(fboM, fboMTexture, GL_RGBA, true);
+    createFrameBufferTexture(fboP, fboPTexture, GL_RGBA, true);
+    createFrameBufferTexture(fboCOutput, fboCTextureOutput, GL_RGBA, false);
+    createFrameBufferTexture(fboMOutput, fboMTextureOutput, GL_RGBA, false);
+    createFrameBufferTexture(fboPOutput, fboPTextureOutput, GL_RGBA, false);
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 
     // Create renderbuffer
     GL_CHECK(glGenRenderbuffers(1, &RBO));
     GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, RBO));
-    GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, opts->width, opts->height));
+    GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, antialiasSamples, GL_DEPTH24_STENCIL8, opts->width, opts->height));
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fboC));
     GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO));
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
@@ -174,18 +178,26 @@ void renderer::makeFrameBuffers() {
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 }
 
-void renderer::createFrameBufferTexture(GLuint &fbo, GLuint &fboTexture, const GLuint format) const {
+void renderer::createFrameBufferTexture(GLuint &fbo, GLuint &fboTexture, const GLuint format, const bool multiSampled) const {
     GL_CHECK(glCreateFramebuffers(1, &fbo));
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fbo));
 
-    GL_CHECK(glGenTextures(1, &fboTexture));
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D, fboTexture));
-    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, format, opts->width, opts->height, 0, format, GL_UNSIGNED_BYTE, nullptr));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-    GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fboTexture, 0));
+    if (multiSampled) {
+        GL_CHECK(glGenTextures(1, &fboTexture));
+        GL_CHECK(glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, fboTexture));
+        GL_CHECK(glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, antialiasSamples, format, opts->width, opts->height, GL_TRUE));
+        GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, fboTexture, 0));
+    } else {
+        GL_CHECK(glGenTextures(1, &fboTexture));
+        GL_CHECK(glBindTexture(GL_TEXTURE_2D, fboTexture));
+        GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, format, opts->width, opts->height, 0, format, GL_UNSIGNED_BYTE, nullptr));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+        GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fboTexture, 0));
+    }
+
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         std::cerr << "Framebuffer is not complete" << std::endl;
         exit(1);
@@ -271,12 +283,22 @@ void renderer::destroy() const {
         GL_CHECK(glDetachShader(program, fragmentShader));
         GL_CHECK(glDeleteShader(fragmentShader));
     }
+
+    // Delete the framebuffers
     GL_CHECK(glDeleteFramebuffers(1, &fboC));
     GL_CHECK(glDeleteTextures(1, &fboCTexture));
     GL_CHECK(glDeleteFramebuffers(1, &fboM));
     GL_CHECK(glDeleteTextures(1, &fboMTexture));
     GL_CHECK(glDeleteFramebuffers(1, &fboP));
     GL_CHECK(glDeleteTextures(1, &fboPTexture));
+
+    GL_CHECK(glDeleteFramebuffers(1, &fboCOutput));
+    GL_CHECK(glDeleteTextures(1, &fboCTextureOutput));
+    GL_CHECK(glDeleteFramebuffers(1, &fboMOutput));
+    GL_CHECK(glDeleteTextures(1, &fboMTextureOutput));
+    GL_CHECK(glDeleteFramebuffers(1, &fboPOutput));
+    GL_CHECK(glDeleteTextures(1, &fboPTextureOutput));
+
     GL_CHECK(glDeleteRenderbuffers(1, &RBO));
     GL_CHECK(glDeleteVertexArrays(1, &ppFullQuadArray));
     GL_CHECK(glDeleteBuffers(1, &ppFullQuadBuffer));
@@ -348,14 +370,14 @@ void renderer::linkProgram(const GLuint program) {
     GLint Result = GL_FALSE;
     int InfoLogLength;
 
-    glLinkProgram(program);
+    GL_CHECK(glLinkProgram(program));
 
     // Check the program
-    glGetProgramiv(program, GL_LINK_STATUS, &Result);
-    glGetProgramiv(program, GL_INFO_LOG_LENGTH, &InfoLogLength);
+    GL_CHECK(glGetProgramiv(program, GL_LINK_STATUS, &Result));
+    GL_CHECK(glGetProgramiv(program, GL_INFO_LOG_LENGTH, &InfoLogLength));
     if (InfoLogLength > 0) {
         std::vector<char> ProgramErrorMessage(InfoLogLength + 1);
-        glGetProgramInfoLog(program, InfoLogLength, nullptr, &ProgramErrorMessage[0]);
+        GL_CHECK(glGetProgramInfoLog(program, InfoLogLength, nullptr, &ProgramErrorMessage[0]));
         printf("%s\n", &ProgramErrorMessage[0]);
     }
 }
@@ -419,11 +441,29 @@ void renderer::_swapPPBuffers() {
     temp = fboC;
     fboC = fboM;
     fboM = temp;
+    temp = fboCTextureOutput;
+    fboCTextureOutput = fboMTextureOutput;
+    fboMTextureOutput = temp;
+    temp = fboCOutput;
+    fboCOutput = fboMOutput;
+    fboMOutput = temp;
+}
+
+void renderer::_resolveMultisampledFramebuffer(const GLuint srcFbo, const GLuint dstFbo) const {
+    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, srcFbo));
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dstFbo));
+    GL_CHECK(glBlitFramebuffer(0, 0, opts->width, opts->height, 0, 0, opts->width, opts->height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
+}
+
+void renderer::_sampleFrameBuffersForPostProcessing() const {
+    _resolveMultisampledFramebuffer(fboC, fboCOutput);
+    _resolveMultisampledFramebuffer(fboP, fboPOutput);
 }
 
 void renderer::frameEnd() {
     // Handle post-processing
     if (opts->postProcessingOptions & GHOSTING) {
+        _sampleFrameBuffersForPostProcessing();
         GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fboM));
         _clear();
         useProgram(ppGhostingProgram);
@@ -432,26 +472,30 @@ void renderer::frameEnd() {
         GL_CHECK(glUniform1i(glGetUniformLocation(ppGhostingProgram, "u_textureP"), 1));
         GL_CHECK(glBindVertexArray(ppFullQuadArray));
 
+        // Sample the textures
+
         // Bind the framebuffer textures
         GL_CHECK(glActiveTexture(GL_TEXTURE0));
-        GL_CHECK(glBindTexture(GL_TEXTURE_2D, fboCTexture));
+        GL_CHECK(glBindTexture(GL_TEXTURE_2D, fboCTextureOutput));
 
         GL_CHECK(glActiveTexture(GL_TEXTURE1));
-        GL_CHECK(glBindTexture(GL_TEXTURE_2D, fboPTexture));
+        GL_CHECK(glBindTexture(GL_TEXTURE_2D, fboPTextureOutput));
 
         GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 6));
 
         _swapPPBuffers();
     }
 
+    _resolveMultisampledFramebuffer(fboC, fboCOutput);
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
     _clear();
     useProgram(ppFinalProgram);
     GL_CHECK(glBindVertexArray(ppFullQuadArray));
 
     GL_CHECK(glUniform1i(glGetUniformLocation(ppFinalProgram, "u_texture"), 0));
+
     GL_CHECK(glActiveTexture(GL_TEXTURE0));
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D, fboCTexture));
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D, fboCTextureOutput));
     GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 6));
 
     // Swap the framebuffers
@@ -461,4 +505,10 @@ void renderer::frameEnd() {
     temp = fboP;
     fboP = fboC;
     fboC = temp;
+    temp = fboPTextureOutput;
+    fboPTextureOutput = fboCTextureOutput;
+    fboCTextureOutput = temp;
+    temp = fboPOutput;
+    fboPOutput = fboCOutput;
+    fboCOutput = temp;
 }
