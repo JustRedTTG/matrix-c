@@ -4,6 +4,10 @@ project(matrix)
 set(CMAKE_CXX_STANDARD 20)
 set(RC_DEPENDS "")
 
+set(BUILD_SHARED_LIBS OFF)
+set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
+set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static")
+
 file(MAKE_DIRECTORY "generated")
 
 function(embed_resource resource_file_name source_file_name variable_name)
