@@ -57,10 +57,7 @@ jobs:
       uses: actions/cache@v3
       with:
         path: |
-          ${{ github.workspace }}/vcpkg/downloads
-          ${{ github.workspace }}/vcpkg/installed
-          ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.bat
-          ${{ github.workspace }}/vcpkg/vcpkg.exe
+          ${{ github.workspace }}/vcpkg/*
         key: ${{ runner.os }}-vcpkg-${{ hashFiles('**/vcpkg.json') }}
         restore-keys: |
           ${{ runner.os }}-vcpkg-
@@ -72,7 +69,6 @@ jobs:
         if (-not (Test-Path -Path "./vcpkg")) {
           git clone https://github.com/microsoft/vcpkg.git
         }
-        dir .\vcpkg
         .\vcpkg\bootstrap-vcpkg.bat
 
     - name: Install packages using vcpkg on Windows
