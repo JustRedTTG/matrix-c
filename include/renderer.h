@@ -1,9 +1,5 @@
 #ifndef RENDERER_H
 #define RENDERER_H
-#ifdef __linux__
-#include <X11/Xlib.h>
-#include <X11/extensions/Xrender.h>
-#endif
 #include <apps.h>
 #include <clock.h>
 #include <options.h>
@@ -11,12 +7,19 @@
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
+#ifdef __linux__
+#include <X11/Xlib.h>
+#include <X11/extensions/Xrender.h>
 #include <GL/glx.h>
+#endif
+
 
 
 #define TITLE "Matrix rain"
 
+#ifdef __linux__
 typedef GLXContext (*glXCreateContextAttribsARBProc)(Display *, GLXFBConfig, GLXContext, Bool, const int *);
+#endif
 
 static constexpr GLfloat ppFullQuadBufferData[] = {
     // Coordinates    // Texture coordinates
