@@ -1,0 +1,16 @@
+name: 'Delete old artifacts'
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  delete-artifacts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: kolpav/purge-artifacts-action@v1
+        with:
+          token: ${{ secrets.PAT_ARTIFACTS }}
+          expire-in: 1
