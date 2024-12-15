@@ -52,19 +52,16 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y libglew-dev libglfw3-dev libx11-dev libxrandr-dev libxi-dev libxxf86vm-dev libxcursor-dev libxinerama-dev
 
-    - name: Set up MSYS2
+    - name: Install vcpkg on Windows
       if: matrix.os == 'windows-latest'
-      uses: msys2/setup-msys2@v2
-      with:
-        msystem: MINGW64
-        update: true
-
-    - name: Set up dependencies on Windows
-      if: matrix.os == 'windows-latest'
-      shell: msys2 {0}
       run: |
-        pacman -Syu --noconfirm
-        pacman -S --noconfirm mingw-w64-x86_64-glew
+        git clone https://github.com/microsoft/vcpkg.git
+        .\vcpkg\bootstrap-vcpkg.bat
+
+    - name: Install GLEW using vcpkg
+      if: matrix.os == 'windows-latest'
+      run: |
+        .\vcpkg\vcpkg install glew
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
