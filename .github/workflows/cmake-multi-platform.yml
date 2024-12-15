@@ -50,7 +50,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libglew-dev libglfw3-dev libx11-dev libxrandr-dev libxi-dev libxxf86vm-dev libxcursor-dev libxinerama-dev libboost-dev
+        sudo apt-get install -y libglew-dev libglfw3-dev libx11-dev libxrandr-dev libxi-dev libxxf86vm-dev libxcursor-dev libxinerama-dev libboost-dev libboost-chrono-dev
 
     - name: Cache vcpkg dependencies on Windows
       if: matrix.os == 'windows-latest'
