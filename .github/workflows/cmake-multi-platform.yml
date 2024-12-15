@@ -46,6 +46,17 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Cache APT packages (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      uses: actions/cache@v3
+      with:
+        path: |
+          /tmp/apt-cache
+          /var/cache/apt/archives
+        key: ${{ runner.os }}-apt-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-apt-
+
     - name: Set up dependencies on Linux
       if: matrix.os == 'ubuntu-latest'
       run: |
@@ -57,7 +68,7 @@ jobs:
       uses: actions/cache@v3
       with:
         path: |
-          ${{ github.workspace }}/vcpkg/downloads
+          ${{ github.workspace }}/vcpkg/downloadsadd libboost-chrono-dev package on linuxadd libboost-chrono-dev package on linux
           ${{ github.workspace }}/vcpkg/installed
         key: ${{ runner.os }}-vcpkg-${{ hashFiles('**/vcpkg.json') }}
         restore-keys: |
