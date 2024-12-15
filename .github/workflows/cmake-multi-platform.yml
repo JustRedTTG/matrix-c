@@ -75,6 +75,12 @@ jobs:
       run: |
         .\vcpkg\vcpkg install opengl:x64-windows glew:x64-windows glfw3:x64-windows boost-chrono:x64-windows
 
+    - name: Set up vcpkg integration
+      if: matrix.os == 'windows-latest'
+      run: |
+        .\vcpkg\vcpkg integrate install
+        .\vcpkg\vcpkg integrate project
+
     - name: Set reusable strings
       id: strings
       shell: bash
