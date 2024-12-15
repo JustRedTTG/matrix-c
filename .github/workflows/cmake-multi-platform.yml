@@ -59,6 +59,7 @@ jobs:
         path: |
           ${{ github.workspace }}/vcpkg/downloads
           ${{ github.workspace }}/vcpkg/installed
+          ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.bat
         key: ${{ runner.os }}-vcpkg-${{ hashFiles('**/vcpkg.json') }}
         restore-keys: |
           ${{ runner.os }}-vcpkg-
@@ -71,7 +72,6 @@ jobs:
           git clone https://github.com/microsoft/vcpkg.git
         }
         Set-Location -Path ./vcpkg
-        dir
         .\bootstrap-vcpkg.bat
 
     - name: Install packages using vcpkg on Windows
