@@ -61,6 +61,7 @@ struct renderer {
 
     GLuint ppGhostingProgram{};
     GLuint ppFinalProgram{};
+    GLuint ppFullQuadArray{};
     GLuint ppFullQuadBuffer{};
 
     GLuint fboC{};
@@ -97,6 +98,8 @@ struct renderer {
     void destroyApp() const;
 
     void frameBegin() const;
+
+    void clear() const;
 
     void frameEnd() const;
 

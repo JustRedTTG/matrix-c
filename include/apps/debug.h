@@ -11,6 +11,7 @@ public:
     void destroy() override;
 private:
     GLfloat vertices[8];
+    GLuint vertexArray{};
     GLuint vertexBuffer{};
     GLuint indexBuffer{};
     GLuint ui_MousePosition{};

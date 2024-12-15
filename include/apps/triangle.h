@@ -13,6 +13,7 @@ public:
 protected:
     float t = 0;
     int m = 1;
+    GLuint vertexArray{};
     GLuint vertexBuffer{};
     GLuint ui_Time{};
     GLuint program{};

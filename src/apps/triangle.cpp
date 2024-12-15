@@ -11,9 +11,8 @@ void TriangleApp::setup() {
     rnd->loadShader(triangleShader, sizeof(triangleShader));
     rnd->useProgram();
 
-    GLuint VertexArrayID;
-    glGenVertexArrays(1, &VertexArrayID);
-    glBindVertexArray(VertexArrayID);
+    glGenVertexArrays(1, &vertexArray);
+    glBindVertexArray(vertexArray);
 
     glGenBuffers(1, &vertexBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
@@ -53,15 +52,13 @@ void TriangleApp::loop() {
 
     glUniform1f(ui_Time, t);
 
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    rnd->clear();
 
     glBindVertexArray(vertexBuffer);
     glDrawArrays(GL_TRIANGLES, 0, 3);
-    // glDisableVertexAttribArray(0);
-    // glDisableVertexAttribArray(1);
 }
 
 void TriangleApp::destroy() {
     glDeleteBuffers(1, &vertexBuffer);
+    glDeleteVertexArrays(1, &vertexArray);
 }

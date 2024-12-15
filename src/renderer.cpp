@@ -1,6 +1,7 @@
 #include "renderer.h"
 
 #include <cstring>
+#include <gl_errors.h>
 #include <shader.h>
 #include <vector>
 #include "basic_texture_fragment_shader.h"
@@ -155,27 +156,35 @@ void renderer::makeFrameBuffers() {
     createFrameBufferTexture(fboM, fboMTexture, GL_RGB);
     createFrameBufferTexture(fboP, fboPTexture, GL_RGB);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 
     // Create renderbuffer
-    glGenRenderbuffers(1, &RBO);
-    glBindRenderbuffer(GL_RENDERBUFFER, RBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, opts->width, opts->height);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
+    GL_CHECK(glGenRenderbuffers(1, &RBO));
+    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, RBO));
+    GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, opts->width, opts->height));
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fboC));
+    GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO));
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        std::cerr << "Framebuffer is not complete" << std::endl;
+        exit(1);
+    }
+
+    // Unbind the framebuffer
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 }
 
 void renderer::createFrameBufferTexture(GLuint &fbo, GLuint &fboTexture, const GLuint format) const {
-    glCreateFramebuffers(1, &fbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    GL_CHECK(glCreateFramebuffers(1, &fbo));
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fbo));
 
-    glGenTextures(1, &fboTexture);
-    glBindTexture(GL_TEXTURE_2D, fboTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, format, opts->width, opts->height, 0, format, GL_UNSIGNED_BYTE, nullptr);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fboTexture, 0);
+    GL_CHECK(glGenTextures(1, &fboTexture));
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D, fboTexture));
+    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, format, opts->width, opts->height, 0, format, GL_UNSIGNED_BYTE, nullptr));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+    GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fboTexture, 0));
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         std::cerr << "Framebuffer is not complete" << std::endl;
         exit(1);
@@ -184,18 +193,18 @@ void renderer::createFrameBufferTexture(GLuint &fbo, GLuint &fboTexture, const G
 
 void renderer::initializePP() {
     // Create VAO for full-screen quad
-    glGenVertexArrays(1, &ppFullQuadBuffer);
-    glBindVertexArray(ppFullQuadBuffer);
+    GL_CHECK(glGenVertexArrays(1, &ppFullQuadArray));
+    GL_CHECK(glBindVertexArray(ppFullQuadArray));
 
-    glGenBuffers(1, &ppFullQuadBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, ppFullQuadBuffer);
+    GL_CHECK(glGenBuffers(1, &ppFullQuadBuffer));
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, ppFullQuadBuffer));
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(ppFullQuadBufferData), ppFullQuadBufferData, GL_STATIC_DRAW);
+    GL_CHECK(glBufferData(GL_ARRAY_BUFFER, sizeof(ppFullQuadBufferData), ppFullQuadBufferData, GL_STATIC_DRAW));
 
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), nullptr);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void *)(2 * sizeof(GLfloat)));
-    glEnableVertexAttribArray(1);
+    GL_CHECK(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), nullptr));
+    GL_CHECK(glEnableVertexAttribArray(0));
+    GL_CHECK(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void *)(2 * sizeof(GLfloat))));
+    GL_CHECK(glEnableVertexAttribArray(1));
 
     // Create the final post-processing program
     ppFinalProgram = createProgram();
@@ -250,13 +259,19 @@ void renderer::destroy() const {
         glDetachShader(program, fragmentShader);
         glDeleteShader(fragmentShader);
     }
-    glDeleteProgram(program);
     glDeleteFramebuffers(1, &fboC);
     glDeleteTextures(1, &fboCTexture);
     glDeleteFramebuffers(1, &fboM);
     glDeleteTextures(1, &fboMTexture);
     glDeleteFramebuffers(1, &fboP);
     glDeleteTextures(1, &fboPTexture);
+    glDeleteRenderbuffers(1, &RBO);
+    glDeleteVertexArrays(1, &ppFullQuadArray);
+    glDeleteBuffers(1, &ppFullQuadBuffer);
+    glDeleteProgram(ppFinalProgram);
+    delete clock;
+    delete events;
+    delete opts;
 }
 
 void renderer::getEvents() const {
@@ -272,6 +287,7 @@ void renderer::getEvents() const {
 
 GLuint renderer::createProgram() {
     program = glCreateProgram();
+    checkGLError("glCreateProgram", __FILE__, __LINE__);
     return program;
 }
 
@@ -301,7 +317,7 @@ void renderer::loadShader(const char *source, GLuint type, GLuint program) {
         glGetShaderInfoLog(shader, logLength, &logLength, log.data());
         std::cerr << "Shader compilation failed: " << log.data() << std::endl;
     }
-    glAttachShader(program, shader);
+    GL_CHECK(glAttachShader(program, shader));
 
     if (type == GL_VERTEX_SHADER)
         vertexShader = shader;
@@ -345,7 +361,7 @@ void renderer::loadShader(const unsigned char *source, int length, GLuint progra
 }
 
 void renderer::useProgram(const GLuint program) {
-    glUseProgram(program);
+    GL_CHECK(glUseProgram(program));
 }
 
 void renderer::useProgram() const {
@@ -366,9 +382,15 @@ void renderer::destroyApp() const {
 }
 
 void renderer::frameBegin() const {
-    glBindFramebuffer(GL_FRAMEBUFFER, fboC);
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fboC));
 }
 
+void renderer::clear() const {
+    if (opts->postProcessingOptions & GHOSTING)
+        return;
+    GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT));
+}
 void renderer::frameEnd() const {
     // Handle post-processing
     // if (opts->postProcessingOptions & GHOSTING) {
@@ -377,12 +399,11 @@ void renderer::frameEnd() const {
     //     useProgram();
     // }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+    clear();
     useProgram(ppFinalProgram);
-    glUniform1i(glGetUniformLocation(ppFinalProgram, "u_texture"), 0);
-    glBindVertexArray(ppFullQuadBuffer);
+    GL_CHECK(glUniform1i(glGetUniformLocation(ppFinalProgram, "u_texture"), 0));
+    GL_CHECK(glBindVertexArray(ppFullQuadArray));
     glDisable(GL_DEPTH_TEST);
     glBindTexture(GL_TEXTURE_2D, fboCTexture);
     glDrawArrays(GL_TRIANGLES, 0, 6);

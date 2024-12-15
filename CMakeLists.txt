@@ -55,6 +55,7 @@ add_executable(matrix
         src/events.cpp
         src/clock.cpp
         src/helper.cpp
+        src/gl_errors.cpp
         src/apps/triangle.cpp
         src/apps.cpp
         src/apps/matrix.cpp
