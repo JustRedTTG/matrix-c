@@ -58,15 +58,10 @@ jobs:
         git clone https://github.com/microsoft/vcpkg.git
         .\vcpkg\bootstrap-vcpkg.bat
 
-    - name: Install GLFW on Windows
+    - name: Install GLEW and GLFW using vcpkg
       if: matrix.os == 'windows-latest'
       run: |
-        choco install glfw3
-
-    - name: Install GLEW using vcpkg
-      if: matrix.os == 'windows-latest'
-      run: |
-        .\vcpkg\vcpkg install glew
+        .\vcpkg\vcpkg install glew:x64-windows glfw3:x64-windows
 
     - name: Set reusable strings
       id: strings
