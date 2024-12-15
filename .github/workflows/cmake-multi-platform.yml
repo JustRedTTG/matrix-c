@@ -64,8 +64,7 @@ jobs:
       shell: msys2 {0}
       run: |
         pacman -Syu --noconfirm
-        pacman -S --noconfirm mingw-w64-x86_64-glew mingw-w64-x86_64-glfw mingw-w64-x86_64-gcc \
-          mingw-w64-x86_64-g++ mingw-w64-x86_64-make
+        pacman -S --noconfirm mingw-w64-x86_64-glew
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
