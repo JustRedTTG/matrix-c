@@ -50,7 +50,19 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libglew-dev libglfw3-dev libx11-dev libxrandr-dev libxi-dev libxxf86vm-dev libxcursor-dev libxinerama-dev
+        sudo apt-get install -y libglew-dev libglfw3-dev libx11-dev libxrandr-dev libxi-dev libxxf86vm-dev libxcursor-dev libxinerama-dev libboost-dev
+
+    - name: Cache vcpkg dependencies on Windows
+      if: matrix.os == 'windows-latest'
+      uses: actions/cache@v3
+      with:
+        path: |
+          C:\vcpkg\downloads
+          C:\vcpkg\installed
+        key: ${{ runner.os }}-vcpkg-${{ hashFiles('**/vcpkg.json') }}
+        restore-keys: |
+          ${{ runner.os }}-vcpkg-
+      
 
     - name: Install vcpkg on Windows
       if: matrix.os == 'windows-latest'
@@ -58,7 +70,7 @@ jobs:
         git clone https://github.com/microsoft/vcpkg.git
         .\vcpkg\bootstrap-vcpkg.bat
 
-    - name: Install GLEW and GLFW using vcpkg
+    - name: Install packages using vcpkg on Windows
       if: matrix.os == 'windows-latest'
       run: |
         .\vcpkg\vcpkg install glew:x64-windows glfw3:x64-windows boost:x64-windows
