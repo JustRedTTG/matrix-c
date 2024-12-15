@@ -73,7 +73,7 @@ jobs:
     - name: Install packages using vcpkg on Windows
       if: matrix.os == 'windows-latest'
       run: |
-        .\vcpkg\vcpkg install glew:x64-windows glfw3:x64-windows boost:x64-windows
+        .\vcpkg\vcpkg install glew:x64-windows glfw3:x64-windows boost-chrono:x64-windows
 
     - name: Set reusable strings
       id: strings
