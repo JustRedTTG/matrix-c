@@ -4,14 +4,9 @@ project(matrix)
 set(CMAKE_CXX_STANDARD 20)
 set(RC_DEPENDS "")
 
-set(BUILD_SHARED_LIBS OFF)
-set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
-set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static")
-
 file(MAKE_DIRECTORY "generated")
 
 function(embed_resource resource_file_name source_file_name variable_name)
-
     file(READ ${resource_file_name} hex_content HEX)
 
     string(REPEAT "[0-9a-f]" 32 column_pattern)
@@ -26,14 +21,16 @@ function(embed_resource resource_file_name source_file_name variable_name)
     set(source "// Auto generated file.\n${array_definition}\n")
 
     file(WRITE "${source_file_name}" "${source}")
-
 endfunction()
 
-find_package(GLEW REQUIRED)
+set(BUILD_SHARED_LIBS OFF)
+
+find_package(GLEW REQUIRED STATIC)
 find_package(Boost REQUIRED COMPONENTS chrono)
 find_package(OpenGL REQUIRED)
-find_package(glfw3 REQUIRED)
+find_package(glfw3 REQUIRED STATIC)
 
+# Include directories
 include_directories(${GLEW_INCLUDE_DIRS})
 include_directories(${OPENGL_INCLUDE_DIR})
 include_directories(${GLFW_INCLUDE_DIRS})
@@ -41,7 +38,6 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 include_directories("include")
 include_directories("generated")
-
 
 # Embed files
 embed_resource("assets/help_message.txt" "generated/help_message.h" "helpMessage")
@@ -54,6 +50,7 @@ embed_resource("assets/shaders/vertex/basic_texture_vertex_shader.vert" "generat
 embed_resource("assets/shaders/fragment/ghosting_fragment_shader.frag" "generated/ghosting_fragment_shader.h" "ghostingFragmentShader")
 embed_resource("assets/shaders/fragment/blur_fragment_shader.frag" "generated/blur_fragment_shader.h" "blurFragmentShader")
 
+# Add executable
 add_executable(matrix
         src/main.cpp
         src/shader.cpp
@@ -69,6 +66,7 @@ add_executable(matrix
         src/apps/debug.cpp
 )
 
+# Link libraries
 target_link_libraries(
         matrix
         ${OPENGL_LIBRARIES}
@@ -77,7 +75,8 @@ target_link_libraries(
         ${Boost_LIBRARIES}
 )
 
-if (UNIX)  # This includes Linux and other Unix-like systems
+# Add X11 support for Unix/Linux systems
+if (UNIX)
     find_package(X11 REQUIRED)
     include_directories("include-linux")
     include_directories(${X11_INCLUDE_DIR})
