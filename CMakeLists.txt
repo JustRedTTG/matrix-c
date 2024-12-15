@@ -24,6 +24,8 @@ function(embed_resource resource_file_name source_file_name variable_name)
 endfunction()
 
 set(BUILD_SHARED_LIBS OFF)
+set(GLEW_USE_STATIC_LIBS ON)
+set(Boost_USE_STATIC_LIBS ON)
 
 find_package(GLEW REQUIRED STATIC)
 find_package(Boost REQUIRED COMPONENTS chrono)
@@ -70,7 +72,7 @@ add_executable(matrix
 target_link_libraries(
         matrix
         ${OPENGL_LIBRARIES}
-        ${GLEW_LIBRARIES}
+        ${GLEW_STATIC_LIBRARIES}
         glfw
         ${Boost_LIBRARIES}
 )
