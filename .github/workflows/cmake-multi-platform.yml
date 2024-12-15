@@ -71,6 +71,7 @@ jobs:
           git clone https://github.com/microsoft/vcpkg.git
         }
         Set-Location -Path ./vcpkg
+        dir
         .\bootstrap-vcpkg.bat
 
     - name: Install packages using vcpkg on Windows
