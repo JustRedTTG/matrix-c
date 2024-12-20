@@ -69,6 +69,14 @@ GLuint ShaderProgram::getUniformLocation(const GLchar *name) const {
     return glGetUniformLocation(program, name);
 }
 
+GLuint ShaderProgram::getUniformBlockIndex(const GLchar *name) const {
+    return glGetUniformBlockIndex(program, name);
+}
+
+void ShaderProgram::uniformBlockBinding(const GLuint blockIndex, const GLuint blockBinding) const {
+    GL_CHECK(glUniformBlockBinding(program, blockIndex, blockBinding));
+}
+
 void ShaderProgram::loadShader(const unsigned char *source, const int length, const GLuint type) {
     const std::string src(reinterpret_cast<const char *>(source), length);
     return loadShader(src.c_str(), type);

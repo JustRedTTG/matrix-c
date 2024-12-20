@@ -15,9 +15,17 @@ struct CharacterInfo {
     uint height;
 };
 
+struct FontAtlas {
+    GLuint texture;
+    GLuint glyphBuffer;
+    float atlasWidth;
+    float atlasHeight;
+};
+
 void initFonts();
 void destroyFonts();
 FT_Face loadFont(const unsigned char *source, int length);
-std::pair<GLuint, GLuint> createFontTextureAtlas(const FT_Face face, const std::string &characters);
+void setFontSize(FT_Face face, int width, int height);
+FontAtlas createFontTextureAtlas(const FT_Face face, const std::string &characters);
 
 #endif //FONTS_H

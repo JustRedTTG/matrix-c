@@ -8,10 +8,11 @@
 
 #include "glad.h"
 
-#define MATRIX_CHARACTERS "ﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃﾏｹﾒｴｶｷﾑﾕﾗｾﾈｽﾀﾇﾍ012345789Z:・.\"=*+-<>¦｜"
-#define MATRIX_RAIN_LIMIT 2000
+// #define MATRIX_CHARACTERS "ﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃﾏｹﾒｴｶｷﾑﾕﾗｾﾈｽﾀﾇﾍ012345789Z:・.\"=*+-<>¦｜"
+#define MATRIX_CHARACTERS "ｵ"
+#define MATRIX_RAIN_LIMIT 1000
 
-struct Vertex {
+struct QuadData {
     float x, y;
     float colorOffset;
     int spark;
@@ -26,10 +27,10 @@ public:
 private:
     ShaderProgram *program{};
     FT_Face font{};
-    GLuint glyphMatrixBuffer{}, glyphMatrixTexture{};
+    GLuint glyphBuffer{}, glyphTexture{};
     GLuint ui_BaseColor{};
     GLuint vertexArray{}, vertexBuffer{};
-    std::vector<Vertex> vertices;
+    std::vector<QuadData> quadData;
 };
 
 

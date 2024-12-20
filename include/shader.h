@@ -23,6 +23,8 @@ public:
     void useProgram() const;
     void linkProgram() const;
     GLuint getUniformLocation(const GLchar *name) const;
+    GLuint getUniformBlockIndex(const GLchar *name) const;
+    void uniformBlockBinding(GLuint blockIndex, GLuint blockBinding) const;
 
     // Load individual shader types
     void loadShader(const unsigned char *source, int length, GLuint type);
@@ -30,6 +32,8 @@ public:
 
     // Parse vertex and fragment shaders from a single source
     void loadShader(const unsigned char *source, int length);
+
+
 private:
     GLuint program{};
     GLuint vertexShader{};
