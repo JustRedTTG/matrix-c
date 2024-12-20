@@ -6,7 +6,7 @@
 #include <cstdio>
 #include <cstring>
 #include <thread>
-#define DEFAULT_APP "triangle"
+#define DEFAULT_APP "matrix"
 
 void showHelp() {
     std::string helpText(reinterpret_cast<const char*>(helpMessage), sizeof(helpMessage));
