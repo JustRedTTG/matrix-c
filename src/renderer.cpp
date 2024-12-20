@@ -1,6 +1,7 @@
 #include "renderer.h"
 
 #include <cstring>
+#include <fonts.h>
 #include <gl_errors.h>
 #include <shader.h>
 #include <vector>
@@ -319,6 +320,7 @@ void renderer::destroy() const {
     delete clock;
     delete events;
     delete opts;
+    destroyFonts();
 }
 
 void renderer::getEvents() const {
