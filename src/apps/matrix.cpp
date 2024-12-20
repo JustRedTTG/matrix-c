@@ -12,7 +12,7 @@ void MatrixApp::setup() {
     // Handle font initialization
     initFonts();
     font = loadFont(matrixFont, sizeof(matrixFont));
-    setFontSize(font, 0, 48);
+    setFontSize(font, 0, rnd->opts->height / 80); // 80 characters per line
     auto [glyphMatrixTexture, glyphBuffer, atlasWidth, atlasHeight] = createFontTextureAtlas(font, MATRIX_CHARACTERS);
     this->glyphTexture = glyphMatrixTexture;
     this->glyphBuffer = glyphBuffer;
