@@ -16,4 +16,24 @@ enum ShaderType {
     FRAGMENT = 1
 };
 
+class ShaderProgram {
+public:
+    ShaderProgram();
+    void destroy() const;
+    void useProgram() const;
+    void linkProgram() const;
+    GLuint getUniformLocation(const GLchar *name) const;
+
+    // Load individual shader types
+    void loadShader(const unsigned char *source, int length, GLuint type);
+    void loadShader(const char *source, GLuint type);
+
+    // Parse vertex and fragment shaders from a single source
+    void loadShader(const unsigned char *source, int length);
+private:
+    GLuint program{};
+    GLuint vertexShader{};
+    GLuint fragmentShader{};
+};
+
 #endif //SHADER_H

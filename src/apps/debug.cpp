@@ -12,18 +12,18 @@ void DebugApp::setup() {
     rnd->opts->blurSize = 2.0f;
     createQuadVertexData(rnd, 50.0, 50.0, vertices);
 
-    program = rnd->createProgram();
-    rnd->loadShaderInternal(debugFragmentShader, sizeof(debugFragmentShader), GL_FRAGMENT_SHADER);
-    rnd->loadShaderInternal(cursorMotionVertexShader, sizeof(cursorMotionVertexShader), GL_VERTEX_SHADER);
-    rnd->linkProgram();
-    rnd->useProgram();
+    program = new ShaderProgram();
+    program->loadShader(debugFragmentShader, sizeof(debugFragmentShader), GL_FRAGMENT_SHADER);
+    program->loadShader(cursorMotionVertexShader, sizeof(cursorMotionVertexShader), GL_VERTEX_SHADER);
+    program->linkProgram();
+    program->useProgram();
 
     GL_CHECK(glUniform2f(
-        glGetUniformLocation(rnd->program, "u_ScreenSize"),
+        program->getUniformLocation("u_ScreenSize"),
         static_cast<GLfloat>(rnd->opts->width),
         static_cast<GLfloat>(rnd->opts->height)
     ));
-    ui_MousePosition = glGetUniformLocation(rnd->program, "u_MousePosition");
+    ui_MousePosition = program->getUniformLocation("u_MousePosition");
 
     GL_CHECK(glGenVertexArrays(1, &vertexArray));
     GL_CHECK(glBindVertexArray(vertexArray));
@@ -48,7 +48,7 @@ void DebugApp::setup() {
 }
 
 void DebugApp::loop() {
-    rnd->useProgram(program);
+    program->useProgram();
     GL_CHECK(glUniform2f(
         ui_MousePosition,
         static_cast<GLfloat>(rnd->events->mouseX),
@@ -65,4 +65,5 @@ void DebugApp::destroy() {
     GL_CHECK(glDeleteBuffers(1, &vertexBuffer));
     GL_CHECK(glDeleteBuffers(1, &indexBuffer));
     GL_CHECK(glDeleteVertexArrays(1, &vertexArray));
+    program->destroy();
 }

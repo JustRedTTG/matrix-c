@@ -20,6 +20,6 @@ private:
     GLuint vertexBuffer{};
     GLuint indexBuffer{};
     GLuint ui_MousePosition{};
-    GLuint program{};
+    ShaderProgram* program{};
 };
 #endif //DEBUG_H

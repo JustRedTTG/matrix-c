@@ -8,6 +8,7 @@
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <shader.h>
 #ifdef __linux__
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrender.h>
@@ -60,14 +61,10 @@ struct renderer {
     tickRateClock *clock;
     GLFWwindow *glfwWindow = nullptr;
 
-    GLuint program{};
-    GLuint vertexShader{};
-    GLuint fragmentShader{};
+    ShaderProgram *ppGhostingProgram{};
+    ShaderProgram *ppBlurProgram{};
 
-    GLuint ppGhostingProgram{};
-    GLuint ppBlurProgram{};
-
-    GLuint ppFinalProgram{};
+    ShaderProgram *ppFinalProgram{};
 
     GLuint ppFullQuadArray{};
     GLuint ppFullQuadBuffer{};
@@ -91,32 +88,13 @@ struct renderer {
 
     void getEvents() const;
 
-    GLuint createProgram();
-
-    void loadShaderInternal(const unsigned char *source, int length, GLuint type);
-    void loadShader(const unsigned char *source, int length, GLuint type, GLuint program);
-
-    void loadShader(const char *source, GLuint type);
-    void loadShader(const char *source, GLuint type, GLuint program);
-
-    void linkProgram() const;
-    static void linkProgram(GLuint program);
-
-    void loadShader(const unsigned char *source, int length);
-    void loadShader(const unsigned char *source, int length, GLuint program);
-
-    static void useProgram(GLuint program);
-    void useProgram() const;
-
     void loadApp();
     void loopApp() const;
     void destroyApp() const;
 
     void frameBegin() const;
 
-    void _clear() const;
-
-    void clear() const;
+    static void clear();
 
     void _swapPPBuffers();
 

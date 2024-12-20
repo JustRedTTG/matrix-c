@@ -9,12 +9,12 @@ static constexpr GLfloat triangleBufferData[] = {
 };
 
 void TriangleApp::setup() {
-    program = rnd->createProgram();
+    program = new ShaderProgram();
     rnd->opts->postProcessingOptions |= GHOSTING;
     rnd->opts->postProcessingOptions |= BLUR;
     rnd->opts->blurSize = 0.2f;
-    rnd->loadShader(triangleShader, sizeof(triangleShader));
-    rnd->useProgram();
+    program->loadShader(triangleShader, sizeof(triangleShader));
+    program->useProgram();
 
     GL_CHECK(glGenVertexArrays(1, &vertexArray));
     GL_CHECK(glBindVertexArray(vertexArray));
@@ -42,11 +42,11 @@ void TriangleApp::setup() {
     ));
     GL_CHECK(glEnableVertexAttribArray(1));
 
-    ui_Time = glGetUniformLocation(rnd->program, "u_Time");
+    ui_Time = program->getUniformLocation("u_Time");
 }
 
 void TriangleApp::loop() {
-    rnd->useProgram(program);
+    program->useProgram();
     t += m * (rnd->clock->deltaTime / 10);
 
     if (m > 0 && t > 10) {
@@ -64,4 +64,5 @@ void TriangleApp::loop() {
 void TriangleApp::destroy() {
     GL_CHECK(glDeleteBuffers(1, &vertexBuffer));
     GL_CHECK(glDeleteVertexArrays(1, &vertexArray));
+    program->destroy();
 }

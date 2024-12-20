@@ -231,23 +231,23 @@ void renderer::initializePP() {
     GL_CHECK(glEnableVertexAttribArray(1));
 
     // Create the final post-processing program
-    ppFinalProgram = createProgram();
-    loadShaderInternal(basicTextureVertexShader, sizeof(basicTextureVertexShader), GL_VERTEX_SHADER);
-    loadShaderInternal(basicTextureFragmentShader, sizeof(basicTextureFragmentShader), GL_FRAGMENT_SHADER);
-    linkProgram();
+    ppFinalProgram = new ShaderProgram();
+    ppFinalProgram->loadShader(basicTextureVertexShader, sizeof(basicTextureVertexShader), GL_VERTEX_SHADER);
+    ppFinalProgram->loadShader(basicTextureFragmentShader, sizeof(basicTextureFragmentShader), GL_FRAGMENT_SHADER);
+    ppFinalProgram->linkProgram();
 
     // Create option specific post-processing programs
     if (opts->postProcessingOptions & GHOSTING) {
-        ppGhostingProgram = createProgram();
-        loadShaderInternal(basicTextureVertexShader, sizeof(basicTextureVertexShader), GL_VERTEX_SHADER);
-        loadShaderInternal(ghostingFragmentShader, sizeof(ghostingFragmentShader), GL_FRAGMENT_SHADER);
-        linkProgram();
+        ppGhostingProgram = new ShaderProgram();
+        ppGhostingProgram->loadShader(basicTextureVertexShader, sizeof(basicTextureVertexShader), GL_VERTEX_SHADER);
+        ppGhostingProgram->loadShader(ghostingFragmentShader, sizeof(ghostingFragmentShader), GL_FRAGMENT_SHADER);
+        ppGhostingProgram->linkProgram();
     }
     if (opts->postProcessingOptions & BLUR) {
-        ppBlurProgram = createProgram();
-        loadShaderInternal(basicTextureVertexShader, sizeof(basicTextureVertexShader), GL_VERTEX_SHADER);
-        loadShaderInternal(blurFragmentShader, sizeof(blurFragmentShader), GL_FRAGMENT_SHADER);
-        linkProgram();
+        ppBlurProgram = new ShaderProgram();
+        ppBlurProgram->loadShader(basicTextureVertexShader, sizeof(basicTextureVertexShader), GL_VERTEX_SHADER);
+        ppBlurProgram->loadShader(blurFragmentShader, sizeof(blurFragmentShader), GL_FRAGMENT_SHADER);
+        ppBlurProgram->linkProgram();
     }
 
     GL_CHECK(glEnable(GL_BLEND));
@@ -291,15 +291,6 @@ void renderer::destroy() const {
         glfwTerminate();
     }
 
-    if (vertexShader) {
-        GL_CHECK(glDetachShader(program, vertexShader));
-        GL_CHECK(glDeleteShader(vertexShader));
-    }
-    if (fragmentShader) {
-        GL_CHECK(glDetachShader(program, fragmentShader));
-        GL_CHECK(glDeleteShader(fragmentShader));
-    }
-
     // Delete the framebuffers
     GL_CHECK(glDeleteFramebuffers(1, &fboC));
     GL_CHECK(glDeleteTextures(1, &fboCTexture));
@@ -318,12 +309,12 @@ void renderer::destroy() const {
     GL_CHECK(glDeleteRenderbuffers(1, &RBO));
     GL_CHECK(glDeleteVertexArrays(1, &ppFullQuadArray));
     GL_CHECK(glDeleteBuffers(1, &ppFullQuadBuffer));
-    GL_CHECK(glDeleteProgram(ppFinalProgram));
+    ppFinalProgram->destroy();
     if (opts->postProcessingOptions & GHOSTING) {
-        GL_CHECK(glDeleteProgram(ppGhostingProgram));
+        ppGhostingProgram->destroy();
     }
     if (opts->postProcessingOptions & BLUR) {
-        GL_CHECK(glDeleteProgram(ppBlurProgram));
+        ppBlurProgram->destroy();
     }
     delete clock;
     delete events;
@@ -341,89 +332,6 @@ void renderer::getEvents() const {
     handleGLFWEvents(this);
 }
 
-GLuint renderer::createProgram() {
-    program = glCreateProgram();
-    checkGLError("glCreateProgram", __FILE__, __LINE__);
-    return program;
-}
-
-void renderer::loadShaderInternal(const unsigned char *source, int length, const GLuint type) {
-    loadShader(source, length, type, program);
-}
-
-void renderer::loadShader(const unsigned char *source, int length, GLuint type, GLuint program) {
-    const std::string src(reinterpret_cast<const char *>(source), length);
-    return loadShader(src.c_str(), type, program);
-}
-
-void renderer::loadShader(const char *source, const GLuint type) {
-    loadShader(source, type, program);
-}
-
-void renderer::loadShader(const char *source, GLuint type, GLuint program) {
-    const GLuint shader = glCreateShader(type);
-    GL_CHECK(glShaderSource(shader, 1, &source, nullptr));
-    GL_CHECK(glCompileShader(shader));
-    GLint success;
-    GL_CHECK(glGetShaderiv(shader, GL_COMPILE_STATUS, &success));
-    if (!success) {
-        GLint logLength;
-        GL_CHECK(glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logLength));
-        std::vector<char> log(logLength);
-        GL_CHECK(glGetShaderInfoLog(shader, logLength, &logLength, log.data()));
-        std::cerr << "Shader compilation failed: " << log.data() << std::endl;
-    }
-    GL_CHECK(glAttachShader(program, shader));
-
-    if (type == GL_VERTEX_SHADER)
-        vertexShader = shader;
-    else if (type == GL_FRAGMENT_SHADER)
-        fragmentShader = shader;
-}
-
-void renderer::linkProgram() const {
-    linkProgram(program);
-}
-
-void renderer::linkProgram(const GLuint program) {
-    GLint Result = GL_FALSE;
-    int InfoLogLength;
-
-    GL_CHECK(glLinkProgram(program));
-
-    // Check the program
-    GL_CHECK(glGetProgramiv(program, GL_LINK_STATUS, &Result));
-    GL_CHECK(glGetProgramiv(program, GL_INFO_LOG_LENGTH, &InfoLogLength));
-    if (InfoLogLength > 0) {
-        std::vector<char> ProgramErrorMessage(InfoLogLength + 1);
-        GL_CHECK(glGetProgramInfoLog(program, InfoLogLength, nullptr, &ProgramErrorMessage[0]));
-        printf("%s\n", &ProgramErrorMessage[0]);
-    }
-}
-
-void renderer::loadShader(const unsigned char *source, const int length) {
-    loadShader(source, length, program);
-}
-
-void renderer::loadShader(const unsigned char *source, int length, GLuint program) {
-    const std::array<std::stringstream, 2> sources = parseShader(source, length);
-    const std::string vertexSource = sources[0].str();
-    const std::string fragmentSource = sources[1].str();
-
-    loadShader(vertexSource.c_str(), GL_VERTEX_SHADER);
-    loadShader(fragmentSource.c_str(), GL_FRAGMENT_SHADER);
-
-    linkProgram(program);
-}
-
-void renderer::useProgram(const GLuint program) {
-    GL_CHECK(glUseProgram(program));
-}
-
-void renderer::useProgram() const {
-    useProgram(program);
-}
-
 void renderer::loadApp() {
     app = initializeApp(this, opts->app);
 }
@@ -439,18 +347,12 @@ void renderer::destroyApp() const {
 
 void renderer::frameBegin() const {
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fboC));
-    _clear();
+    clear();
 }
 
-void renderer::_clear() const {
+void renderer::clear() {
     GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 0.0f));
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT));
-}
-
-void renderer::clear() const {
-    // if (opts->postProcessingOptions & GHOSTING)
-    //     return;
-    _clear();
 }
 
 void renderer::_swapPPBuffers() {
@@ -484,11 +386,11 @@ void renderer::frameEnd() {
     if (opts->postProcessingOptions & GHOSTING) {
         _sampleFrameBuffersForPostProcessing();
         GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fboM));
-        _clear();
-        useProgram(ppGhostingProgram);
+        clear();;
+        ppGhostingProgram->useProgram();
 
-        GL_CHECK(glUniform1i(glGetUniformLocation(ppGhostingProgram, "u_textureC"), 0));
-        GL_CHECK(glUniform1i(glGetUniformLocation(ppGhostingProgram, "u_textureP"), 1));
+        GL_CHECK(glUniform1i(ppGhostingProgram->getUniformLocation("u_textureC"), 0));
+        GL_CHECK(glUniform1i(ppGhostingProgram->getUniformLocation("u_textureP"), 1));
         GL_CHECK(glBindVertexArray(ppFullQuadArray));
 
         // Bind the framebuffer textures
@@ -505,11 +407,11 @@ void renderer::frameEnd() {
     if (opts->postProcessingOptions & BLUR) {
         _sampleFrameBuffersForPostProcessing();
         GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fboM));
-        _clear();
-        useProgram(ppBlurProgram);
+        clear();;
+        ppBlurProgram->useProgram();
 
-        GL_CHECK(glUniform1i(glGetUniformLocation(ppBlurProgram, "u_textureC"), 0));
-        GL_CHECK(glUniform1f(glGetUniformLocation(ppBlurProgram, "u_blurSize"), opts->blurSize));
+        GL_CHECK(glUniform1i(ppBlurProgram->getUniformLocation("u_textureC"), 0));
+        GL_CHECK(glUniform1f(ppBlurProgram->getUniformLocation("u_blurSize"), opts->blurSize));
         GL_CHECK(glBindVertexArray(ppFullQuadArray));
 
         // Bind the framebuffer textures
@@ -523,11 +425,11 @@ void renderer::frameEnd() {
 
     _resolveMultisampledFramebuffer(fboC, fboCOutput);
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-    _clear();
-    useProgram(ppFinalProgram);
+    clear();;
+    ppFinalProgram->useProgram();
     GL_CHECK(glBindVertexArray(ppFullQuadArray));
 
-    GL_CHECK(glUniform1i(glGetUniformLocation(ppFinalProgram, "u_texture"), 0));
+    GL_CHECK(glUniform1i(ppFinalProgram->getUniformLocation("u_texture"), 0));
 
     GL_CHECK(glActiveTexture(GL_TEXTURE0));
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, fboCTextureOutput));

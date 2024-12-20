@@ -16,7 +16,7 @@ protected:
     GLuint vertexArray{};
     GLuint vertexBuffer{};
     GLuint ui_Time{};
-    GLuint program{};
+    ShaderProgram* program{};
 };
 
 #endif //TRIANGLE_H
