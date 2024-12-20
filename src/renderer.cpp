@@ -359,12 +359,15 @@ void renderer::_swapPPBuffers() {
     GLuint temp = fboCTexture;
     fboCTexture = fboMTexture;
     fboMTexture = temp;
+
     temp = fboC;
     fboC = fboM;
     fboM = temp;
+
     temp = fboCTextureOutput;
     fboCTextureOutput = fboMTextureOutput;
     fboMTextureOutput = temp;
+
     temp = fboCOutput;
     fboCOutput = fboMOutput;
     fboMOutput = temp;
@@ -436,16 +439,22 @@ void renderer::frameEnd() {
     GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 6));
 
     // Swap the framebuffers
-    GLuint temp = fboPTexture;
-    fboPTexture = fboCTexture;
-    fboCTexture = temp;
-    temp = fboP;
-    fboP = fboC;
-    fboC = temp;
-    temp = fboPTextureOutput;
-    fboPTextureOutput = fboCTextureOutput;
-    fboCTextureOutput = temp;
-    temp = fboPOutput;
-    fboPOutput = fboCOutput;
-    fboCOutput = temp;
+    if (clock->frameSwapDeltaTime >= FRAME_SWAP) {
+        GLuint temp = fboPTexture;
+        fboPTexture = fboCTexture;
+        fboCTexture = temp;
+
+        temp = fboP;
+        fboP = fboC;
+        fboC = temp;
+
+        temp = fboPTextureOutput;
+        fboPTextureOutput = fboCTextureOutput;
+        fboCTextureOutput = temp;
+
+        temp = fboPOutput;
+        fboPOutput = fboCOutput;
+        fboCOutput = temp;
+        clock->resetFrameSwapTime();
+    }
 }

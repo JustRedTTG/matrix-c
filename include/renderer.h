@@ -18,6 +18,7 @@
 
 
 #define TITLE "Matrix rain"
+#define FRAME_SWAP 1.0f / 60.0f
 
 #ifdef __linux__
 typedef GLXContext (*glXCreateContextAttribsARBProc)(Display *, GLXFBConfig, GLXContext, Bool, const int *);
