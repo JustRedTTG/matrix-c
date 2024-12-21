@@ -1,12 +1,8 @@
 #ifndef FONTS_H
 #define FONTS_H
 #include <glad.h>
-#include <string>
 #include <vector>
-#include <freetype2/ft2build.h>
-#include FT_FREETYPE_H
-
-inline FT_Library library = nullptr;
+#include <boost/mpl/int.hpp>
 
 struct CharacterInfo {
     uint xOffset;
@@ -15,17 +11,19 @@ struct CharacterInfo {
     uint height;
 };
 
-struct FontAtlas {
-    GLuint texture;
-    GLuint glyphBuffer;
-    float atlasWidth;
-    float atlasHeight;
+struct FontInfo {
+    int width, height, size, characterCount;
+    CharacterInfo characterInfoList[];
 };
 
-void initFonts();
-void destroyFonts();
-FT_Face loadFont(const unsigned char *source, int length);
-void setFontSize(FT_Face face, int width, int height);
-FontAtlas createFontTextureAtlas(const FT_Face face, const std::string &characters);
+struct FontAtlas {
+    GLuint glyphTexture, glyphBuffer;
+    float atlasWidth;
+    float atlasHeight;
+
+    void destroy() const;
+};
+
+FontAtlas *createFontTextureAtlas(const unsigned char *source, const FontInfo *fontInfo);
 
 #endif //FONTS_H

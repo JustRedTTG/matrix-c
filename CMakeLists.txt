@@ -14,6 +14,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(glm)
 
+
 file(MAKE_DIRECTORY "generated")
 
 function(embed_resource resource_file_name source_file_name variable_name)
@@ -41,16 +42,15 @@ set(Boost_USE_STATIC_RUNTIME OFF)
 find_package(Boost REQUIRED COMPONENTS chrono)
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED STATIC)
-find_package(Freetype REQUIRED STATIC)
 
 # Include directories
 include_directories(${OPENGL_INCLUDE_DIR})
 include_directories(${GLFW_INCLUDE_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
-include_directories(${FREETYPE_INCLUDE_DIRS})
 
 include_directories("include")
 include_directories("generated")
+include_directories("assets/fonts/include")
 
 # Embed files
 embed_resource("assets/help_message.txt" "generated/help_message.h" "helpMessage")
@@ -65,7 +65,7 @@ embed_resource("assets/shaders/vertex/basic_texture_vertex_shader.vert" "generat
 embed_resource("assets/shaders/fragment/ghosting_fragment_shader.frag" "generated/ghosting_fragment_shader.h" "ghostingFragmentShader")
 embed_resource("assets/shaders/fragment/blur_fragment_shader.frag" "generated/blur_fragment_shader.h" "blurFragmentShader")
 
-embed_resource("assets/fonts/JiyunoTsubasa.ttf" "generated/matrix_font.h" "matrixFont")
+embed_resource("assets/fonts/matrix_font.raw" "generated/matrix_font.h" "matrixFont")
 
 # Add executable
 add_executable(matrix
@@ -90,7 +90,6 @@ target_link_libraries(
         matrix
         ${OPENGL_LIBRARIES}
         glfw
-        ${FREETYPE_LIBRARIES}
         ${Boost_LIBRARIES}
         glm::glm
 )

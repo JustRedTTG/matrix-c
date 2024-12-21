@@ -12,6 +12,8 @@ struct tickRateClock {
     void initialize();
     void resetFrameSwapTime();
 
+    float floatTime() const;
+
     static boost::chrono::steady_clock::time_point now();
 };
 

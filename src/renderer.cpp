@@ -320,7 +320,6 @@ void renderer::destroy() const {
     delete clock;
     delete events;
     delete opts;
-    destroyFonts();
 }
 
 void renderer::getEvents() const {

@@ -17,15 +17,15 @@ layout(std140) uniform u_AtlasBuffer {
 uniform mat4 u_Projection;
 uniform vec2 u_AtlasTextureSize;
 uniform int u_MaxCharacters;
+uniform float u_CharacterScaling;
+uniform float u_Time;
 
 out float v_ColorOffset;
 flat out int v_Spark;
 out vec2 v_TexCoord;
 
-const float u_Scale = 200.0;
-
 int generateRandomIndex(int instanceID, int maxIndex) {
-    return abs((instanceID * 123456789) % maxIndex);
+    return abs(int(mod(floor(instanceID * u_Time), float(maxIndex))));
 }
 
 void main()
@@ -56,7 +56,7 @@ void main()
     }
 
     // Add the vertex position in NDC
-    vec2 screenPosition = position + vertexPosition;
+    vec2 screenPosition = position + (vertexPosition * u_CharacterScaling);
     vec2 atlasPosition = vec2(glyphXOffset, glyphYOffset) + vertexPosition;
 
     // Apply the projection matrix to get the position in clip space
