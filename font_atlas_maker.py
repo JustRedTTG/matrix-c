@@ -7,7 +7,8 @@ FONT = "JiyunoTsubasa.ttf"
 NAME = "matrix_font"
 INFO = "matrixFontInfo"
 CHARACTERS = "ﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃﾏｹﾒｴｶｷﾑﾕﾗｾﾈｽﾀﾇﾍ012345789Z:・.\"=*+-<>¦｜"
-FONT_SIZE = 20
+FONT_SIZE = 50
+DEBUG = False
 h_file = """
 #ifndef FONT_ATLAS_INFO_H
 #define FONT_ATLAS_INFO_H
@@ -46,7 +47,7 @@ class CustomMetricsHandler(pe.SheetHandler):
 print("Using PGE version", pe.__version__)
 pe.init((0, 0))
 
-text = pe.Text(CHARACTERS, os.path.join('assets', 'fonts', FONT), FONT_SIZE, colors=[(255, 0, 0), None])
+text = pe.Text(CHARACTERS, os.path.join('assets', 'fonts', FONT), FONT_SIZE, colors=[pe.colors.white, None])
 metrics = text.font.metrics(text.text)
 
 # Pack the characters into a texture atlas
@@ -55,18 +56,29 @@ atlas = pe.Atlas.from_sheets({
     "_": sheet,
 })
 
-# Create a PNG file with the atlas
-# with atlas.surface:
-#     for mapping in atlas.mappings['_']:
-#         pe.draw.rect(pe.colors.blue, mapping, 1)
-#
-# atlas.surface.save_to_file(f"{NAME}.png")
+# Create a PNG file with the atlas and debug text
+if DEBUG:
+    with atlas.surface:
+        c = 0
+        change = 255 // len(atlas.mappings['_'])
+
+        pe.fill.interlace(pe.colors.green, 5)
+
+        for i, mapping in enumerate(atlas.mappings['_']):
+            pe.draw.rect((c, c, c), mapping, 1)
+            text = pe.Text(str(i), font_size=20, colors=[pe.colors.white, (c, c, c)])
+            text.rect.topleft = mapping[:2]
+            text.display()
+            c += change
+
+    atlas.surface.save_to_file(f"atlas_debug.png")
 
 with open(os.path.join('assets', 'fonts', f'{NAME}.raw'), 'wb') as file:
     for y in range(atlas.surface.height):
         for x in range(atlas.surface.width):
             r, g, b, a = atlas.surface.get_at((x, y))
-            intensity = int(r * (a / 255))
+            i = (r + g + b) // 3
+            intensity = int(i * (a / 255))
 
             file.write(struct.pack('B', intensity))
 
@@ -75,7 +87,7 @@ with open(os.path.join(INCLUDE_DIRECTORY, f'{NAME}_info.h'), 'w') as file:
         h_file.format(
             INFO, atlas.surface.width, atlas.surface.height, FONT_SIZE, len(CHARACTERS),
             ',\n\t\t'.join(
-                f'{{{mapping_element[0]},{mapping_element[1]},{mapping_element[2]},{mapping_element[3]}}}'
+                f'{{{mapping_element[0]},{atlas.surface.height - mapping_element[1] - FONT_SIZE},{mapping_element[2]},{mapping_element[3]}}}'
                 for mapping_element in atlas.mappings['_']
             )
         )

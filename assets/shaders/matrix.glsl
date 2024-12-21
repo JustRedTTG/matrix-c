@@ -19,19 +19,21 @@ uniform vec2 u_AtlasTextureSize;
 uniform int u_MaxCharacters;
 uniform float u_CharacterScaling;
 uniform float u_Time;
+uniform int u_Rotation;
 
 out float v_ColorOffset;
 flat out int v_Spark;
 out vec2 v_TexCoord;
 
 int generateRandomIndex(int instanceID, int maxIndex) {
-    return abs(int(mod(floor(instanceID * u_Time), float(maxIndex))));
+    return abs(int(mod(floor(instanceID + u_Time * 10), float(maxIndex))));
 }
 
 void main()
 {
     // Get a random index for the character data
-    int randomIndex = generateRandomIndex(gl_InstanceID, u_MaxCharacters);
+    int randomIndex = generateRandomIndex(gl_InstanceID+1, u_MaxCharacters);
+//    int randomIndex = gl_InstanceID;
 
     // Fetch the character data from the texture buffer using the random index
     CharacterInfo characterInfo = characterInfoList[randomIndex];
@@ -41,7 +43,8 @@ void main()
     float glyphWidth = float(characterInfo.width);
     float glyphHeight = float(characterInfo.height);
 
-    int quadID = gl_InstanceID;
+    float angle = radians(float(u_Rotation));
+    mat2 rotationMatrix = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
 
     // Calculate the position of the vertex
     vec2 vertexPosition = vec2(0.0);
@@ -58,6 +61,12 @@ void main()
     // Add the vertex position in NDC
     vec2 screenPosition = position + (vertexPosition * u_CharacterScaling);
     vec2 atlasPosition = vec2(glyphXOffset, glyphYOffset) + vertexPosition;
+
+    // Calculate the center of the character
+    vec2 center = position + vec2(glyphWidth, glyphHeight) * 0.5 * u_CharacterScaling;
+
+    // Translate to the center, apply rotation, and translate back
+    screenPosition = rotationMatrix * (screenPosition - center) + center;
 
     // Apply the projection matrix to get the position in clip space
     gl_Position = u_Projection * vec4(screenPosition, 0.0, 1.0);
@@ -82,5 +91,13 @@ void main()
 {
     float glyphColor = texture(u_AtlasTexture, v_TexCoord).r;
 
-    fragColor = vec4(u_BaseColor * glyphColor, glyphColor);
+    vec3 color;
+
+    if (v_Spark == 0) {
+        color = vec3(1.0, 1.0, 1.0);
+    } else {
+        color = u_BaseColor;
+    }
+
+    fragColor = vec4(color * glyphColor, glyphColor);
 }
