@@ -117,7 +117,7 @@ void MatrixApp::loop() {
 
     baseColor += rnd->clock->deltaTime / MATRIX_DELTA_MULTIPLIER;
 
-    int amountOfReassignedRaindrops = static_cast<int>(rnd->events->keysPressed) * MATRIX_EFFECT_PER_KEYPRESS;
+    int amountOfReassignedRaindrops = std::max(0, static_cast<int>(rnd->events->keysPressed) * MATRIX_EFFECT_PER_KEYPRESS);
     if (rnd->events->mouseLeft) {
         amountOfReassignedRaindrops += MATRIX_DRAW_STRENGTH;
     }

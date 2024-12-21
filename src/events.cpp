@@ -1,4 +1,5 @@
 #include "events.h"
+#include <unordered_set>
 
 #ifdef __linux__
 void handleMousePress(groupedEvents *events, const int number, bool pressed) {
@@ -71,6 +72,7 @@ void handleX11Events(const renderer *rnd) {
 #endif
 
 void handleGLFWEvents(const renderer *rnd) {
+    static std::unordered_set<int> pressedKeys;
     glfwPollEvents();
     if (glfwWindowShouldClose(rnd->glfwWindow)) {
         rnd->events->quit = true;
@@ -95,11 +97,11 @@ void handleGLFWEvents(const renderer *rnd) {
     rnd->events->mouseX = static_cast<long>(x);
     rnd->events->mouseY = static_cast<long>(y);
 
+    pressedKeys.clear();
     for (int key = GLFW_KEY_SPACE; key <= GLFW_KEY_LAST; ++key) {
         if (glfwGetKey(rnd->glfwWindow, key) == GLFW_PRESS) {
-            rnd->events->keysPressed++;
-        } else if (glfwGetKey(rnd->glfwWindow, key) == GLFW_RELEASE) {
-            rnd->events->keysPressed--;
+            pressedKeys.insert(key);
         }
     }
+    rnd->events->keysPressed = pressedKeys.size();
 }
