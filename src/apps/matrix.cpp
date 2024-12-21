@@ -10,6 +10,8 @@
 
 void MatrixApp::setup() {
     rnd->opts->postProcessingOptions |= GHOSTING;
+    rnd->opts->ghostingPreviousFrameOpacity = 0.997f;
+    rnd->opts->ghostingBlurSize = 0.1f;
     // Handle font initialization
     atlas = createFontTextureAtlas(matrixFont, &matrixFontInfo);
 
@@ -18,7 +20,8 @@ void MatrixApp::setup() {
     program->loadShader(matrixShader, sizeof(matrixShader));
     program->useProgram();
 
-    float characterScale = static_cast<float>(rnd->opts->height) / (MATRIX_DEBUG ? 20.0 : 80.0) / static_cast<float>(matrixFontInfo.size);
+    const float characterScale = static_cast<float>(rnd->opts->height) / (MATRIX_DEBUG ? 20.0 : 70.0) / static_cast<float>(matrixFontInfo.size);
+    mouseRadius = rnd->opts->height / 10.0f;
 
     GL_CHECK(glUniform1i(program->getUniformLocation("u_AtlasTexture"), 0));
     GL_CHECK(glUniform1i(program->getUniformLocation("u_MaxCharacters"), matrixFontInfo.characterCount-1));
@@ -26,7 +29,6 @@ void MatrixApp::setup() {
     GL_CHECK(glUniform1f(program->getUniformLocation("u_CharacterScaling"), characterScale));
     GL_CHECK(glUniform2f(program->getUniformLocation("u_AtlasTextureSize"), atlas->atlasWidth, atlas->atlasHeight));
 
-    std::cout << "Atlas size: " << atlas->atlasWidth << "x" << atlas->atlasHeight << std::endl;
     const GLuint blockIndex = program->getUniformBlockIndex("u_AtlasBuffer");
     program->uniformBlockBinding(blockIndex, 0);
 
@@ -84,21 +86,17 @@ void MatrixApp::setup() {
 
     // Initialize vertices
     for (int i = 0; i < MATRIX_RAIN_LIMIT; ++i) {
-        if (MATRIX_DEBUG) {
+        if constexpr (MATRIX_DEBUG) {
             rainDrawData[i].x = matrixFontInfo.characterInfoList[i].xOffset * characterScale;
             rainDrawData[i].y = matrixFontInfo.characterInfoList[i].yOffset * characterScale;
         } else {
-            rainDrawData[i].x = (static_cast<float>(rand() % rnd->opts->width) / MATRIX_TEXT_SIZE_DIVISOR) *
-                                MATRIX_TEXT_SIZE_DIVISOR;
-            rainDrawData[i].y = (static_cast<float>(rand() % rnd->opts->height) / MATRIX_TEXT_SIZE_DIVISOR) *
-                                MATRIX_TEXT_SIZE_DIVISOR;
+            rainDrawData[i].x = random_td_float(0, rnd->opts->width);
+            rainDrawData[i].y = random_td_float(0, rnd->opts->height);
         }
-        rainDrawData[i].colorOffset = static_cast<float>(rand()) / RAND_MAX;
-        rainDrawData[i].spark = rand() % MATRIX_CHANCE_OF_SPARK;
-        rainData[i].speed = static_cast<float>(
-            rand() % (static_cast<int>(20 / MATRIX_TEXT_SIZE_DIVISOR) - static_cast<int>(10 / MATRIX_TEXT_SIZE_DIVISOR)
-                      + 1) + static_cast<int>(10 / MATRIX_TEXT_SIZE_DIVISOR));
-        if (MATRIX_DEBUG) {
+        rainDrawData[i].colorOffset = randomColorOffset();
+        rainDrawData[i].spark = randomSpark();
+        rainData[i].speed = randomSpeed();
+        if constexpr (MATRIX_DEBUG) {
             rainData[i].speed = 0;
         } else if constexpr (MATRIX_UP) {
             rainData[i].speed *= -1;
@@ -114,19 +112,26 @@ void MatrixApp::loop() {
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, atlas->glyphTexture));
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, atlas->glyphBuffer);
 
-    GL_CHECK(glUniform3f(ui_BaseColor, 0.0f, 1.0f, 0.0f));
+    GL_CHECK(glUniform1f(ui_BaseColor, baseColor));
     GL_CHECK(glUniform1f(ui_Time, rnd->clock->floatTime()));
 
+    baseColor += rnd->clock->deltaTime / MATRIX_DELTA_MULTIPLIER;
 
-    for (int i = 0; i < MATRIX_RAIN_LIMIT; ++i) {
-        rainDrawData[i].y -= rainData[i].speed * rnd->clock->deltaTime * 20;
-        if (rainDrawData[i].y < 0) {
-            rainDrawData[i].x = (static_cast<float>(rand() % rnd->opts->width) / MATRIX_TEXT_SIZE_DIVISOR) *
-                                MATRIX_TEXT_SIZE_DIVISOR;
-            rainDrawData[i].y = static_cast<float>(rnd->opts->height);
-            rainDrawData[i].spark = rand() % MATRIX_CHANCE_OF_SPARK;
-        }
+    int amountOfReassignedRaindrops = static_cast<int>(rnd->events->keysPressed) * MATRIX_EFFECT_PER_KEYPRESS;
+    if (rnd->events->mouseLeft) {
+        amountOfReassignedRaindrops += MATRIX_DRAW_STRENGTH;
     }
+
+    if (amountOfReassignedRaindrops > MATRIX_RAIN_LIMIT - activeCursorPardons) {
+        amountOfReassignedRaindrops = MATRIX_RAIN_LIMIT - activeCursorPardons;
+    }
+
+    int reassignedRaindrops[amountOfReassignedRaindrops];
+    for (int i = 0; i < amountOfReassignedRaindrops; ++i) {
+        reassignedRaindrops[i] = random_int(0, MATRIX_RAIN_LIMIT - 1);
+    }
+
+    for (int i = 0; i < MATRIX_RAIN_LIMIT; ++i) incrementRain(i, reassignedRaindrops);
 
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer));
     GL_CHECK(glBufferSubData(GL_ARRAY_BUFFER, 0, rainDrawData.size() * sizeof(RainDrawData), rainDrawData.data()));
@@ -142,4 +147,121 @@ void MatrixApp::destroy() {
     GL_CHECK(glDeleteBuffers(1, &vertexBuffer));
     GL_CHECK(glDeleteVertexArrays(1, &vertexArray));
     program->destroy();
+}
+
+int MatrixApp::random_int(const int a, const int b) {
+    return a + rand() % ((b+1) - a);
+}
+
+int MatrixApp::random_td_int(int a, int b)
+{
+    a /= MATRIX_TEXT_SIZE_DIVISOR;
+    b /= MATRIX_TEXT_SIZE_DIVISOR;
+    return random_int(a, b) * MATRIX_TEXT_SIZE_DIVISOR;
+}
+
+float MatrixApp::random_float(const float a, const float b) {
+    return a + static_cast<float>(rand()) / RAND_MAX * (b - a);
+}
+
+float MatrixApp::random_td_float(float a, float b) {
+    a /= MATRIX_TEXT_SIZE_DIVISOR;
+    b /= MATRIX_TEXT_SIZE_DIVISOR;
+    return random_float(a, b) * MATRIX_TEXT_SIZE_DIVISOR;
+}
+
+int MatrixApp::randomMultiplier() {
+    return random_int(0, 1) == 0 ? -1 : 1;
+}
+
+int MatrixApp::randomSpark() {
+    return random_int(0, MATRIX_CHANCE_OF_SPARK);
+}
+
+int MatrixApp::randomSpeed() {
+    return random_td_float(10, 20);
+}
+
+float MatrixApp::randomColorOffset() {
+    return random_float(-MATRIX_COLOR_VARIATION, MATRIX_COLOR_VARIATION);
+}
+
+void MatrixApp::resetRain(const int index) {
+    rainDrawData[index].x = random_td_float(0, rnd->opts->width);
+    rainDrawData[index].spark = randomSpark();
+    rainDrawData[index].colorOffset = randomColorOffset();
+    rainData[index].speed = randomSpeed();
+}
+
+void MatrixApp::incrementRain(const int index, const int *reassignedRaindrops) {
+    // Move the raindrop along its path
+    const float addX = rot_d15_m2 * randomMultiplier();
+    const float speed = rainData[index].speed - rot_d15_d2;
+
+    float mouseX = static_cast<float>(rnd->events->mouseX);
+    float mouseY = static_cast<float>(rnd->opts->height - rnd->events->mouseY);
+    float dx = rainDrawData[index].x - mouseX;
+    float dy = rainDrawData[index].y - mouseY;
+    float distance = sqrt(dx * dx + dy * dy);
+
+    for (int i = 0; i < sizeof(reassignedRaindrops) / sizeof(reassignedRaindrops[0]); ++i) {
+        if (reassignedRaindrops[i] == index) {
+            rainData[index].cursorPardons = rnd->events->mouseLeft ? 300 : 100;
+            rainDrawData[index].colorOffset += 0.5;
+            activeCursorPardons++;
+            rainDrawData[index].x = mouseX;
+            rainDrawData[index].y = mouseY;
+            rainData[index].pushX = cos(random_int(0, 360) * M_PI / 180.0f) * rnd->clock->deltaTime * MATRIX_DELTA_MULTIPLIER;
+            rainData[index].pushY = sin(random_int(0, 360) * M_PI / 180.0f) * rnd->clock->deltaTime *  MATRIX_DELTA_MULTIPLIER;
+            break;
+        }
+    }
+
+    if (rainData[index].cursorPardons == 0 and distance < mouseRadius) {
+        // Push the raindrop away from the cursor
+        const float force = (mouseRadius - distance) / mouseRadius;
+        const float pushX = dx / distance * force * 100.0f; // Adjust the push strength as needed
+        const float pushY = dy / distance * force * 100.0f;
+
+        rainDrawData[index].x += pushX;
+        rainData[index].pushX += pushX;
+        rainData[index].pushY += pushY;
+        rainDrawData[index].y += pushY;
+    } else if (rainData[index].cursorPardons > 0) {
+        // Expand from the cursor
+        rainDrawData[index].x += rainData[index].pushX;
+        rainDrawData[index].y += rainData[index].pushY;
+
+        rainData[index].cursorPardons--;
+        if (rainData[index].cursorPardons == 0) {
+            activeCursorPardons--;
+            rainData[index].pushX = 0;
+            rainData[index].pushY = 0;
+        }
+    } else if (rainData[index].pushX != 0 || rainData[index].pushY != 0) {
+        // Reset the push force
+        rainDrawData[index].x -= rainData[index].pushX;
+        rainDrawData[index].y -= rainData[index].pushY;
+        rainData[index].pushX = 0;
+        rainData[index].pushY = 0;
+    }
+
+    if (rainData[index].cursorPardons == 0) {
+        rainDrawData[index].x += addX;
+        rainDrawData[index].y -= speed * rnd->clock->deltaTime * MATRIX_DELTA_MULTIPLIER;
+    }
+
+    if (random_int(0, 1000) == 0) {
+        rainDrawData[index].x = random_td_float(0, rnd->opts->width);
+    }
+
+
+    // Finally check the position of the raindrop to see if it needs to be reset
+    if constexpr (MATRIX_UP && rainDrawData[index].y >= rnd->opts->height) {
+        rainDrawData[index].y = 0;
+        resetRain(index);
+    } else if (rainDrawData[index].y < 0) {
+        rainDrawData[index].y = static_cast<float>(rnd->opts->height);
+        resetRain(index);
+    }
 }

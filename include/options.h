@@ -19,6 +19,10 @@ struct options {
     uint8_t userAllowedPostProcessingOptions = 0xFF;
     char* app = new char[256];
     GLfloat blurSize = 1.0f;
+    GLfloat ghostingBlurSize = 0.0f;
+    GLfloat ghostingPreviousFrameOpacity = 0.99f;
+    float swapTime = 1.0f / 60.0f;  // Framerate basically
+    bool loopWithSwap = true;
 
     void maskPostProcessingOptionsWithUserAllowed();
 };

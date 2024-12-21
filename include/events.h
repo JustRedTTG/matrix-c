@@ -18,7 +18,7 @@ void handleGLFWEvents(const renderer *rnd);
 
 struct groupedEvents {
     bool quit;
-    long mouseX, mouseY;
+    long mouseX, mouseY, keysPressed;
     bool mouseLeft, mouseRight, mouseMiddle;
     boost::chrono::steady_clock::time_point lastMouseMotion{};
 };

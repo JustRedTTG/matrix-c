@@ -26,7 +26,7 @@ flat out int v_Spark;
 out vec2 v_TexCoord;
 
 int generateRandomIndex(int instanceID, int maxIndex) {
-    return abs(int(mod(floor(instanceID + u_Time * 10), float(maxIndex))));
+    return abs(int(mod(floor(instanceID + u_Time * 100), float(maxIndex))));
 }
 
 void main()
@@ -81,11 +81,18 @@ void main()
 out vec4 fragColor;
 
 uniform sampler2D u_AtlasTexture;
-uniform vec3 u_BaseColor;
+uniform float u_BaseColor;
 
 in float v_ColorOffset;
 flat in int v_Spark;
 in vec2 v_TexCoord;
+
+vec3 hueToRgb(float hue) {
+    float r = abs(hue * 6.0 - 3.0) - 1.0;
+    float g = 2.0 - abs(hue * 6.0 - 2.0);
+    float b = 2.0 - abs(hue * 6.0 - 4.0);
+    return clamp(vec3(r, g, b), 0.0, 1.0);
+}
 
 void main()
 {
@@ -96,7 +103,8 @@ void main()
     if (v_Spark == 0) {
         color = vec3(1.0, 1.0, 1.0);
     } else {
-        color = u_BaseColor;
+        float hue = mod(u_BaseColor + v_ColorOffset, 1.0);
+        color = hueToRgb(hue);
     }
 
     fragColor = vec4(color * glyphColor, glyphColor);

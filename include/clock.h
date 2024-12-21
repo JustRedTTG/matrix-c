@@ -9,6 +9,9 @@ struct tickRateClock {
     float frameSwapDeltaTime{};
 
     void calculateDeltaTime();
+
+    void calculateFrameSwapDeltaTime();
+
     void initialize();
     void resetFrameSwapTime();
 

@@ -25,11 +25,13 @@ int main(const int argc, char *argv[]) {
             break;
         }
 
-        rnd->frameBegin();
-        rnd->loopApp();
-        rnd->frameEnd();
+        if (!opts->loopWithSwap || rnd->clock->frameSwapDeltaTime >= opts->swapTime) {
+            rnd->frameBegin();
+            rnd->loopApp();
+            rnd->frameEnd();
 
-        rnd->swapBuffers();
+            rnd->swapBuffers();
+        }
     }
 
     rnd->destroy();

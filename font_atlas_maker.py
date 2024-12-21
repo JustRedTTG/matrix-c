@@ -7,7 +7,7 @@ FONT = "JiyunoTsubasa.ttf"
 NAME = "matrix_font"
 INFO = "matrixFontInfo"
 CHARACTERS = "ﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃﾏｹﾒｴｶｷﾑﾕﾗｾﾈｽﾀﾇﾍ012345789Z:・.\"=*+-<>¦｜"
-FONT_SIZE = 50
+FONT_SIZE = 100
 DEBUG = False
 h_file = """
 #ifndef FONT_ATLAS_INFO_H

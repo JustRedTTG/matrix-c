@@ -37,8 +37,10 @@ void handleX11Events(const renderer *rnd) {
             if (event.xcookie.evtype == XI_RawMotion) {
                 rnd->events->lastMouseMotion = rnd->clock->now();
             } else if (event.xcookie.evtype == XI_RawKeyPress) {
+                rnd->events->keysPressed++;
                 // std::cout << "Key pressed: " << static_cast<XIRawEvent *>(event.xcookie.data)->detail << std::endl;
             } else if (event.xcookie.evtype == XI_RawKeyRelease) {
+                rnd->events->keysPressed--;
                 // std::cout << "Key released: " << static_cast<XIRawEvent *>(event.xcookie.data)->detail << std::endl;
             } else if (event.xcookie.evtype == XI_RawButtonPress) {
                 handleMousePress(rnd->events, static_cast<XIRawEvent *>(event.xcookie.data)->detail, true);
@@ -48,8 +50,10 @@ void handleX11Events(const renderer *rnd) {
             XFreeEventData(rnd->display, &event.xcookie);
         } else if (!rnd->x11MouseEvents) {
             if (event.type == KeyPress) {
+                rnd->events->keysPressed++;
                 // std::cout << "X11 Key pressed: " << event.xkey.keycode << std::endl;
             } else if (event.type == KeyRelease) {
+                rnd->events->keysPressed--;
                 // std::cout << "X11 Key released: " << event.xkey.keycode << std::endl;
             } else if (event.type == ButtonPress) {
                 handleMousePress(rnd->events, event.xbutton.button, true);
@@ -72,23 +76,30 @@ void handleGLFWEvents(const renderer *rnd) {
         rnd->events->quit = true;
     }
 
-    if (glfwGetMouseButton(rnd->glfwWindow, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+    if (glfwGetMouseButton(rnd->glfwWindow, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
         rnd->events->mouseLeft = true;
-    } else {
+    else
         rnd->events->mouseLeft = false;
-    }
-    if (glfwGetMouseButton(rnd->glfwWindow, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS) {
+
+    if (glfwGetMouseButton(rnd->glfwWindow, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS)
         rnd->events->mouseMiddle = true;
-    } else {
+    else
         rnd->events->mouseMiddle = false;
-    }
-    if (glfwGetMouseButton(rnd->glfwWindow, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
+    if (glfwGetMouseButton(rnd->glfwWindow, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
         rnd->events->mouseRight = true;
-    } else {
+    else
         rnd->events->mouseRight = false;
-    }
+
     double x, y;
     glfwGetCursorPos(rnd->glfwWindow, &x, &y);
     rnd->events->mouseX = static_cast<long>(x);
     rnd->events->mouseY = static_cast<long>(y);
+
+    for (int key = GLFW_KEY_SPACE; key <= GLFW_KEY_LAST; ++key) {
+        if (glfwGetKey(rnd->glfwWindow, key) == GLFW_PRESS) {
+            rnd->events->keysPressed++;
+        } else if (glfwGetKey(rnd->glfwWindow, key) == GLFW_RELEASE) {
+            rnd->events->keysPressed--;
+        }
+    }
 }
