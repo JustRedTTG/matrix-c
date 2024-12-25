@@ -5,10 +5,10 @@
 #include <boost/mpl/int.hpp>
 
 struct CharacterInfo {
-    uint xOffset;
-    uint yOffset;
-    uint width;
-    uint height;
+    unsigned int xOffset;
+    unsigned int yOffset;
+    unsigned int width;
+    unsigned int height;
 };
 
 struct FontInfo {
