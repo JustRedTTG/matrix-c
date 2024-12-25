@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
+#include <cmath>
 #include "matrix_font.h"
 #include "matrix_font_info.h"
 
@@ -126,12 +126,9 @@ void MatrixApp::loop() {
         amountOfReassignedRaindrops = MATRIX_RAIN_LIMIT - activeCursorPardons;
     }
 
-    int reassignedRaindrops[amountOfReassignedRaindrops];
-    for (int i = 0; i < amountOfReassignedRaindrops; ++i) {
-        reassignedRaindrops[i] = random_int(0, MATRIX_RAIN_LIMIT - 1);
-    }
+    int reassignedRaindrop = amountOfReassignedRaindrops > 0 ? random_int(0, MATRIX_RAIN_LIMIT - 1) : -1;
 
-    for (int i = 0; i < MATRIX_RAIN_LIMIT; ++i) incrementRain(i, reassignedRaindrops);
+    for (int i = 0; i < MATRIX_RAIN_LIMIT; ++i) incrementRain(i, i == reassignedRaindrop);
 
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer));
     GL_CHECK(glBufferSubData(GL_ARRAY_BUFFER, 0, rainDrawData.size() * sizeof(RainDrawData), rainDrawData.data()));
@@ -193,7 +190,7 @@ void MatrixApp::resetRain(const int index) {
     rainData[index].speed = randomSpeed();
 }
 
-void MatrixApp::incrementRain(const int index, const int *reassignedRaindrops) {
+void MatrixApp::incrementRain(const int index, const bool reassigned) {
     // Move the raindrop along its path
     const float addX = rot_d15_m2 * randomMultiplier();
     const float speed = rainData[index].speed - rot_d15_d2;
@@ -204,17 +201,14 @@ void MatrixApp::incrementRain(const int index, const int *reassignedRaindrops) {
     float dy = rainDrawData[index].y - mouseY;
     float distance = sqrt(dx * dx + dy * dy);
 
-    for (int i = 0; i < sizeof(reassignedRaindrops) / sizeof(reassignedRaindrops[0]); ++i) {
-        if (reassignedRaindrops[i] == index) {
-            rainData[index].cursorPardons = rnd->events->mouseLeft ? 300 : 100;
-            rainDrawData[index].colorOffset += 0.5;
-            activeCursorPardons++;
-            rainDrawData[index].x = mouseX;
-            rainDrawData[index].y = mouseY;
-            rainData[index].pushX = cos(random_int(0, 360) * M_PI / 180.0f) * rnd->clock->deltaTime * MATRIX_DELTA_MULTIPLIER;
-            rainData[index].pushY = sin(random_int(0, 360) * M_PI / 180.0f) * rnd->clock->deltaTime *  MATRIX_DELTA_MULTIPLIER;
-            break;
-        }
+    if (reassigned) {
+        rainData[index].cursorPardons = rnd->events->mouseLeft ? 300 : 100;
+        rainDrawData[index].colorOffset += 0.5;
+        activeCursorPardons++;
+        rainDrawData[index].x = mouseX;
+        rainDrawData[index].y = mouseY;
+        rainData[index].pushX = cos(random_int(0, 360) * M_PI / 180.0f) * rnd->clock->deltaTime * MATRIX_DELTA_MULTIPLIER;
+        rainData[index].pushY = sin(random_int(0, 360) * M_PI / 180.0f) * rnd->clock->deltaTime *  MATRIX_DELTA_MULTIPLIER;
     }
 
     if (rainData[index].cursorPardons == 0 and distance < mouseRadius) {

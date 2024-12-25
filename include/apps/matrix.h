@@ -17,6 +17,10 @@
 #define MATRIX_DEBUG false
 #define MATRIX_UP false
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 struct RainDrawData {
     float x, y;
     float colorOffset;
@@ -45,7 +49,7 @@ private:
     static int randomSpeed();
     static float randomColorOffset();
     void resetRain(int index);
-    void incrementRain(int index, const int *reassignedRaindrops);
+    void incrementRain(int index, bool reassigned);
 
     ShaderProgram *program{};
     FontAtlas *atlas{};

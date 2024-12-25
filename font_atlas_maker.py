@@ -15,11 +15,11 @@ h_file = """
 #include "fonts.h"
 
 static constexpr FontInfo {} = {{
-    .width = {},
-    .height = {},
-    .size = {},
-    .characterCount = {},
-    .characterInfoList = {{
+    {},
+    {},
+    {},
+    {},
+    {{
         {}
     }}
 }};

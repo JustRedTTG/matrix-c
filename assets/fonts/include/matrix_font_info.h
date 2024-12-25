@@ -4,11 +4,11 @@
 #include "fonts.h"
 
 static constexpr FontInfo matrixFontInfo = {
-    .width = 527,
-    .height = 600,
-    .size = 100,
-    .characterCount = 54,
-    .characterInfoList = {
+    527,
+    600,
+    100,
+    54,
+    {
         {183,200,50,100},
 		{233,200,50,100},
 		{327,500,50,100},
