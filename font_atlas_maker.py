@@ -14,14 +14,16 @@ h_file = """
 #define FONT_ATLAS_INFO_H
 #include "fonts.h"
 
+constexpr CharacterInfo {}[] = {{
+    {}
+}};
+
 static constexpr FontInfo {} = {{
-    {},
-    {},
-    {},
-    {},
-    {{
-        {}
-    }}
+    .width = {},
+    .height = {},
+    .size = {},
+    .characterCount = {},
+    .characterInfoList = {}
 }};
 
 #endif //FONT_ATLAS_INFO_H
@@ -82,14 +84,20 @@ with open(os.path.join('assets', 'fonts', f'{NAME}.raw'), 'wb') as file:
 
             file.write(struct.pack('B', intensity))
 
+
+characterListName= f'{INFO}CharacterList'
 with open(os.path.join(INCLUDE_DIRECTORY, f'{NAME}_info.h'), 'w') as file:
     file.write(
         h_file.format(
-            INFO, atlas.surface.width, atlas.surface.height, FONT_SIZE, len(CHARACTERS),
-            ',\n\t\t'.join(
-                f'{{{mapping_element[0]},{atlas.surface.height - mapping_element[1] - FONT_SIZE},{mapping_element[2]},{mapping_element[3]}}}'
+            characterListName,
+            ',\n\t'.join(
+                f'{{{mapping_element[0]},'
+                f'{atlas.surface.height - mapping_element[1] - FONT_SIZE},'
+                f'{mapping_element[2]},'
+                f'{mapping_element[3]}}}'
                 for mapping_element in atlas.mappings['_']
-            )
+            ),
+            INFO, atlas.surface.width, atlas.surface.height, FONT_SIZE, len(CHARACTERS), characterListName
         )
     )
 3

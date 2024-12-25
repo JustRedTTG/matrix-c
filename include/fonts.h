@@ -12,8 +12,8 @@ struct CharacterInfo {
 };
 
 struct FontInfo {
-    int width, height, size, characterCount;
-    CharacterInfo characterInfoList[];
+    const int width, height, size, characterCount;
+    const CharacterInfo* characterInfoList;
 };
 
 struct FontAtlas {
