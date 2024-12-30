@@ -126,9 +126,17 @@ void MatrixApp::loop() {
         amountOfReassignedRaindrops = MATRIX_RAIN_LIMIT - activeCursorPardons;
     }
 
-    int reassignedRaindrop = amountOfReassignedRaindrops > 0 ? random_int(0, MATRIX_RAIN_LIMIT - 1) : -1;
+    const int reassignedRaindrop = amountOfReassignedRaindrops > 0 ? random_int(0, MATRIX_RAIN_LIMIT - 1) : -1;
 
-    for (int i = 0; i < MATRIX_RAIN_LIMIT; ++i) incrementRain(i, i == reassignedRaindrop);
+    std::cout << "Active cursor pardons [B]: " << activeCursorPardons << std::endl;
+    int activeCursorPardons = 0;
+    for (int i = 0; i < MATRIX_RAIN_LIMIT; ++i) {
+        incrementRain(i, i == reassignedRaindrop);
+        if (rainData[i].cursorPardons > 0) {
+            activeCursorPardons++;
+        }
+    }
+    std::cout << "Active cursor pardons [A]: " << activeCursorPardons << std::endl;
 
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer));
     GL_CHECK(glBufferSubData(GL_ARRAY_BUFFER, 0, rainDrawData.size() * sizeof(RainDrawData), rainDrawData.data()));
@@ -204,7 +212,6 @@ void MatrixApp::incrementRain(const int index, const bool reassigned) {
     if (reassigned) {
         rainData[index].cursorPardons = rnd->events->mouseLeft ? 300 : 100;
         rainDrawData[index].colorOffset += 0.5;
-        activeCursorPardons++;
         rainDrawData[index].x = mouseX;
         rainDrawData[index].y = mouseY;
         rainData[index].pushX = cos(random_int(0, 360) * M_PI / 180.0f) * rnd->clock->deltaTime * MATRIX_DELTA_MULTIPLIER;
@@ -228,7 +235,6 @@ void MatrixApp::incrementRain(const int index, const bool reassigned) {
 
         rainData[index].cursorPardons--;
         if (rainData[index].cursorPardons == 0) {
-            activeCursorPardons--;
             rainData[index].pushX = 0;
             rainData[index].pushY = 0;
         }
