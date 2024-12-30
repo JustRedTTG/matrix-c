@@ -128,7 +128,6 @@ void MatrixApp::loop() {
 
     const int reassignedRaindrop = amountOfReassignedRaindrops > 0 ? random_int(0, MATRIX_RAIN_LIMIT - 1) : -1;
 
-    std::cout << "Active cursor pardons [B]: " << activeCursorPardons << std::endl;
     int activeCursorPardons = 0;
     for (int i = 0; i < MATRIX_RAIN_LIMIT; ++i) {
         incrementRain(i, i == reassignedRaindrop);
@@ -136,7 +135,6 @@ void MatrixApp::loop() {
             activeCursorPardons++;
         }
     }
-    std::cout << "Active cursor pardons [A]: " << activeCursorPardons << std::endl;
 
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer));
     GL_CHECK(glBufferSubData(GL_ARRAY_BUFFER, 0, rainDrawData.size() * sizeof(RainDrawData), rainDrawData.data()));
