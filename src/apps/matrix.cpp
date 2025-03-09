@@ -212,11 +212,16 @@ void MatrixApp::incrementRain(const int index, const bool reassigned) {
         rainDrawData[index].colorOffset += 0.5;
         rainDrawData[index].x = mouseX;
         rainDrawData[index].y = mouseY;
-        rainData[index].pushX = cos(random_int(0, 360) * M_PI / 180.0f) * rnd->clock->deltaTime * MATRIX_DELTA_MULTIPLIER;
-        rainData[index].pushY = sin(random_int(0, 360) * M_PI / 180.0f) * rnd->clock->deltaTime *  MATRIX_DELTA_MULTIPLIER;
+        if (random_int(0, 4) == 0) {
+            rainData[index].pushX = cos(random_int(0, 360) * M_PI / 180.0f) * rnd->clock->deltaTime * MATRIX_DELTA_MULTIPLIER * MATRIX_SPEED_DRAW;
+            rainData[index].pushY = sin(random_int(0, 360) * M_PI / 180.0f) * rnd->clock->deltaTime *  MATRIX_DELTA_MULTIPLIER * MATRIX_SPEED_DRAW;
+        } else {
+            rainData[index].pushX = 0;
+            rainData[index].pushY = 0;
+        }
     }
 
-    if (rainData[index].cursorPardons == 0 and distance < mouseRadius) {
+    if (rainData[index].cursorPardons == 0 and distance < mouseRadius and random_int(0, 10) != 0) {
         // Push the raindrop away from the cursor
         const float force = (mouseRadius - distance) / mouseRadius;
         const float pushX = dx / distance * force * 100.0f; // Adjust the push strength as needed
